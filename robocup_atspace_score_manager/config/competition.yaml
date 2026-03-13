@@ -1,0 +1,19 @@
+competition:
+  team_name: "teamA"
+  trial_number: 1
+  initial_score: 0
+  time_limit: 300
+
+  scoring:
+    start_task:
+      departure: 10
+    navigation_task:
+      reach_goal: 20
+      avoid_obstacle: 10
+      safety_bonus: 20
+    search_task:
+      fixed_object_capture: 20
+      portable_object_capture: 20
+    docking_task:
+      arrival: 20
+      docking: 20

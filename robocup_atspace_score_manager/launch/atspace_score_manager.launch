@@ -1,0 +1,6 @@
+<launch>
+    <node name="robocup_atspace_score_manager_node" pkg="robocup_atspace_score_manager" type="atspace_score_manager.py" output="screen">
+        <rosparam command="load" file="$(find robocup_atspace_score_manager)/config/competition.yaml" />
+        <rosparam command="load" file="$(find robocup_atspace_score_manager)/config/rules.yaml" />
+    </node>
+</launch>
