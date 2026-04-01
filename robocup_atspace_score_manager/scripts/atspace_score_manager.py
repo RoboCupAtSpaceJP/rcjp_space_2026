@@ -5,7 +5,8 @@ import rospy
 import smach
 import smach_ros
 import tf2_ros
-from smach_files.goal_checker import GoalChecker
+from smach_files.docking_area_monitor import DockingDepartureMonitor, DockingReturnMonitor
+from smach_files.navigation_area_monitor import NavigationAreaMonitor
 
 def child_term_cb(outcome_map):
         return True
@@ -45,6 +46,8 @@ class StartTaskState(smach.State):
     def execute(self, userdata):
         rospy.loginfo('=== Start Task State ===')
         try:
+            docking_departure_monitor = DockingDepartureMonitor()
+            docking_departure_monitor.wait_until_departed()
             userdata.start_task_score += 10
             return 'success'
         except Exception as e:
@@ -58,7 +61,14 @@ class NavigationTaskState(smach.State):
     def execute(self, userdata):
         rospy.loginfo('=== Navigation Task State ===')
         try:
-            return 'success'
+            nav_monitor = NavigationAreaMonitor()
+            result = nav_monitor.monitor_transition()
+            if result == "search_area_reached":
+                userdata.navigation_task_score += 10
+                return 'searchtask'
+            elif result == "docking_area_reached":
+                userdata.navigation_task_score += 20
+                return 'dockingtask'
         except Exception as e:
             rospy.logerr('Navigation task error: %s', str(e))
             return 'fail'
@@ -82,6 +92,9 @@ class DockingTaskState(smach.State):
     def execute(self, userdata):
         rospy.loginfo('=== Docking Task State ===')
         try:
+            docking_return_monitor = DockingReturnMonitor()
+            docking_return_monitor.wait_until_returned()
+            userdata.docking_task_score += 20
             return 'success'
         except Exception as e:
             rospy.logerr('Docking task error: %s', str(e))
@@ -110,7 +123,8 @@ def main():
                                remapping={'start_task_score': 'score'})
 
         smach.StateMachine.add('NAVIGATIONTASK', NavigationTaskState(),
-                               transitions={'success': 'SEARCHTASK',
+                               transitions={'searchtask': 'SEARCHTASK',
+                                            'dockingtask': 'DOCKINGTASK',
                                             'fail': 'task_failed'},
                                remapping={'navigation_task_score': 'score'})
 
