@@ -5,4 +5,5 @@
     <node name="search_point_tf_publisher" pkg="robocup_atspace_score_manager" type="search_point.py" output="screen"/>
 
     <node name="robocup_atspace_score_manager_node" pkg="robocup_atspace_score_manager" type="atspace_score_manager.py" output="screen"/>
+    <node name="rviz_node" pkg="rviz" type="rviz" args="-d $(find robocup_atspace_score_manager)/rviz/score_manager.rviz"/>
 </launch>
