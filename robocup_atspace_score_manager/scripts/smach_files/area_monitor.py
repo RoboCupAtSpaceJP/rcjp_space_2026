@@ -32,6 +32,7 @@ class AreaMonitor:
             inside = (self.x_range[0] <= pos.x <= self.x_range[1] and
                       self.y_range[0] <= pos.y <= self.y_range[1] and
                       self.z_range[0] <= pos.z <= self.z_range[1])
+            # rospy.loginfo("Position: (%.2f, %.2f, %.2f) - Inside %s: %s", pos.x, pos.y, pos.z, self.area_name, inside)
             return inside
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             return None
@@ -48,11 +49,11 @@ class AreaMonitor:
             
     def wait_until_reached(self):
         rate = rospy.Rate(10)
-        rospy.loginfo("Waiting for return to %s...", self.area_name)
+        rospy.loginfo("Waiting for reach to %s...", self.area_name)
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is True:
-                rospy.loginfo("Return confirmed.")
+                rospy.loginfo("Reach confirmed.")
                 break
             rate.sleep()
 

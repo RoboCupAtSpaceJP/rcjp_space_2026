@@ -67,7 +67,7 @@ class StartTaskState(smach.State):
         rospy.loginfo('=== Start Task State ===')
         try:
             docking_area_monitor = AreaMonitor(area_name="docking_area")
-            # docking_area_monitor.wait_until_departed()
+            docking_area_monitor.wait_until_departed()
             userdata.scores_dict['start_task'] = rospy.get_param('/rules/scoring/start_task/departure')
             return 'success'
         except Exception as e:
@@ -85,12 +85,14 @@ class NavigationTaskState(smach.State):
         try:
             if not userdata.searched:
                 search_area_monitor = AreaMonitor(area_name="search_area")
-                # search_area_monitor.wait_until_reached()
+                search_area_monitor.wait_until_reached()
                 userdata.scores_dict['navigation_task'] = rospy.get_param('/rules/scoring/navigation_task/reach_goal')
                 return 'searchtask'
             else:
+                search_area_monitor = AreaMonitor(area_name="search_area")
+                search_area_monitor.wait_until_departed()
                 docking_area_monitor = AreaMonitor(area_name="docking_area")
-                # docking_area_monitor.wait_until_reached()
+                docking_area_monitor.wait_until_reached()
                 userdata.scores_dict['navigation_task'] += rospy.get_param('/rules/scoring/navigation_task/reach_goal')
                 return 'dockingtask'
         except Exception as e:
@@ -102,26 +104,32 @@ class SearchTaskState(smach.State):
         smach.State.__init__(self, outcomes=['success', 'fail'],
                              input_keys=['scores_dict'],
                              output_keys=['scores_dict', 'searched'])
+        self.detector = None
+
     def execute(self, userdata):
             rospy.loginfo('=== Search Task State ===')
             try:
                 target_object_type = rospy.get_param('/competition/target_object_type')
                 target_object_name = rospy.get_param('/competition/target_object_name')
-                detector = CaptureDetector(object_name=target_object_name)
-                return 'success'  # Placeholder for actual capture logic
+                if self.detector is None:
+                    self.detector = CaptureDetector(object_name=target_object_name)
+                else:
+                    self.detector.target_object = target_object_name
 
-                # result = detector.wait_for_result()
+                userdata.searched = True
 
-                # if result == "capture_succeed":
-                #     rospy.loginfo('Target captured successfully!')
-                #     param_path = f'/rules/scoring/search_task/{target_object_type}_object_capture'
-                #     userdata.scores_dict['search_task'] = rospy.get_param(param_path)
-                #     userdata.searched = True
-                #     return 'success'
-                # else:
-                #     rospy.logwarn(f'Capture failed or error occurred: {result}')
-                #     userdata.searched = True
-                #     return 'success'
+                result = self.detector.wait_for_result()
+
+                if result == "capture_succeed":
+                    rospy.loginfo('Target captured successfully!')
+                    param_path = f'/rules/scoring/search_task/{target_object_type}_object_capture'
+                    userdata.scores_dict['search_task'] = rospy.get_param(param_path)
+                    userdata.searched = True
+                    return 'success'
+                else:
+                    rospy.logwarn(f'Target capture failed: {result}')
+                    userdata.searched = True
+                    return 'success'
 
             except Exception as e:
                 rospy.logerr(f'Search task error: {str(e)}')
@@ -184,7 +192,7 @@ def main():
                                             'fail': 'task_failed'})
 
         smach.StateMachine.add('SEARCHTASK', SearchTaskState(),
-                               transitions={'success': 'DOCKINGTASK',
+                               transitions={'success': 'NAVIGATIONTASK',
                                             'fail': 'task_failed'})
 
         smach.StateMachine.add('DOCKINGTASK', DockingTaskState(),
