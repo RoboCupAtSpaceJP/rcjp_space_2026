@@ -1,6 +1,8 @@
 <launch>
     <rosparam command="load" file="$(find robocup_atspace_score_manager)/config/competition.yaml" />
     <rosparam command="load" file="$(find robocup_atspace_score_manager)/config/rules.yaml" />
-    <node name="area_marker_node" pkg="robocup_atspace_score_manager" type="area_marker.py" output="screen"/>
+    <node name="area_marker_publisher" pkg="robocup_atspace_score_manager" type="area_marker.py" output="screen"/>
+    <node name="search_point_tf_publisher" pkg="robocup_atspace_score_manager" type="search_point.py" output="screen"/>
+
     <node name="robocup_atspace_score_manager_node" pkg="robocup_atspace_score_manager" type="atspace_score_manager.py" output="screen"/>
 </launch>

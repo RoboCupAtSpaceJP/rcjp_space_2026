@@ -1,27 +1,35 @@
 rules:
-  docking_area:
-    x_range: [10.8, 11.0]
-    y_range: [-3.8, -3.3]
-    z_range: [4.0, 4.3]
+  areas:
+    name: ["docking_area", "navigation_area", "search_area"]
+    docking_area:
+      x_range: [10.8, 11.0]
+      y_range: [-3.8, -3.3]
+      z_range: [4.0, 4.3]
 
-  navigation_area:
-    x_range: [10.0, 12.0]
-    y_range: [-8.0, -3.8]
-    z_range: [4.0, 6.0]
+    navigation_area:
+      x_range: [10.0, 12.0]
+      y_range: [-8.0, -3.8]
+      z_range: [4.0, 6.0]
 
-  search_area:
-    x_range: [10.0, 12.0]
-    y_range: [-11.5, -8.0]
-    z_range: [4.0, 6.0]
-
-  fixed_objects:
-    name:
-    - "airlock"
-
-  portable_objects:
-    name:
-    - "laptop"
-
+    search_area:
+      x_range: [10.0, 12.0]
+      y_range: [-11.5, -8.0]
+      z_range: [4.0, 6.0]
+  search_points:
+    fixed:
+      name: ["atu", "airlock", "window"]
+      atu:
+        position: [11.922381401062012, -6.9545207023620605, 4.279989242553711]
+        rotation: [0.0, 0.0, 3.14]
+      airlock:
+        position: [10.925918579101562, -10.028264999389648, 5.313942909240723]
+        rotation: [0.0, 0.0, 1.57]
+      window:
+        position: [11.7, -11.364152908325195, 4.573802947998047]
+        rotation: [0.0, 0.0, 1.57]
+    portable:
+      name: ["laptop", "tape", "ctb"]
+    
   safety_distance: 0.3
 
   capture_conditions:

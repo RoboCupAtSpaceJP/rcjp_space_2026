@@ -3,13 +3,13 @@
 import rospy
 import tf2_ros
 
-class DockingAreaMonitor:
-    def __init__(self):
+class AreaMonitor:
+    def __init__(self, area_name="docking_area"):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         
-        rules = rospy.get_param('~rules', {})
-        area = rules.get('docking_area', {})
+        areas = rospy.get_param('/rules/areas')
+        area = areas.get(area_name, {})
         
         self.x_range = area.get('x_range', [0, 0])
         self.y_range = area.get('y_range', [0, 0])
@@ -34,8 +34,7 @@ class DockingAreaMonitor:
             return inside
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             return None
-
-class DockingDepartureMonitor(DockingAreaMonitor):
+        
     def wait_until_departed(self):
         rate = rospy.Rate(10)
         rospy.loginfo("Waiting for departure from docking_area...")
@@ -45,9 +44,8 @@ class DockingDepartureMonitor(DockingAreaMonitor):
                 rospy.loginfo("Departure confirmed.")
                 break
             rate.sleep()
-
-class DockingReturnMonitor(DockingAreaMonitor):
-    def wait_until_returned(self):
+            
+    def wait_until_reached(self):
         rate = rospy.Rate(10)
         rospy.loginfo("Waiting for return to docking_area...")
         while not rospy.is_shutdown():
@@ -60,11 +58,10 @@ class DockingReturnMonitor(DockingAreaMonitor):
 if __name__ == '__main__':
     rospy.init_node('docking_task_monitor')
     
-    departure_task = DockingDepartureMonitor()
-    departure_task.wait_until_departed()
+    docking_area_monitor = AreaMonitor(area_name="docking_area")
+    docking_area_monitor.wait_until_departed()
     
     rospy.loginfo("Executing mission...")
     rospy.sleep(5.0)
     
-    return_task = DockingReturnMonitor()
-    return_task.wait_until_returned()
+    docking_area_monitor.wait_until_reached()

@@ -33,25 +33,27 @@ def create_marker(name, ranges, marker_id):
         marker.color.r, marker.color.g, marker.color.b = 0.0, 1.0, 0.0
     elif "search" in name:
         marker.color.r, marker.color.g, marker.color.b = 0.0, 0.0, 1.0
-    
     return marker
 
 def main():
     rospy.init_node('area_marker_publisher')
+
     pub = rospy.Publisher('area_marker_array', MarkerArray, queue_size=10, latch=True)
     
-    full_rules = rospy.get_param('~rules', {})
-    target_areas = ["docking_area", "navigation_area", "search_area"]
-    
+    rules = rospy.get_param('/rules')
+
+    target_areas = rules.get('areas').get('name')
     marker_array = MarkerArray()
     marker_id = 0
     
     for area_name in target_areas:
-        if area_name in full_rules:
-            ranges = full_rules[area_name]
-            marker = create_marker(area_name, ranges, marker_id)
-            marker_array.markers.append(marker)
-            marker_id += 1
+        ranges = rules.get('areas').get(area_name)
+        if ranges is None:
+            rospy.logwarn(f"Area '{area_name}' not found in rules. Skipping marker creation.")
+            continue
+        marker = create_marker(area_name, ranges, marker_id)
+        marker_array.markers.append(marker)
+        marker_id += 1
 
     rate = rospy.Rate(1)
     while not rospy.is_shutdown():

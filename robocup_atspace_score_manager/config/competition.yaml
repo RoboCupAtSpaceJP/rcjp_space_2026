@@ -2,6 +2,7 @@ competition:
   team_name: "teamA"
   trial_number: 1
   initial_score: 0
+  target_object_name: "airlock"
   time_limit: 300
 
   scoring:
