@@ -35,7 +35,7 @@ rules:
 
   capture_conditions:
     distance_threshold: 1.0
-    dot_product_threshold: 0.5
+    dot_product_threshold: 0.98
 
   scoring:
     start_task:
