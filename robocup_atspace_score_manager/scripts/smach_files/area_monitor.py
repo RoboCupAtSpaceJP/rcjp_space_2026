@@ -9,11 +9,12 @@ class AreaMonitor:
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         
         areas = rospy.get_param('/rules/areas')
-        area = areas.get(area_name, {})
+        self.area_name = area_name
+        self.area_config = areas.get(area_name)
         
-        self.x_range = area.get('x_range', [0, 0])
-        self.y_range = area.get('y_range', [0, 0])
-        self.z_range = area.get('z_range', [0, 0])
+        self.x_range = self.area_config.get('x_range', [0, 0])
+        self.y_range = self.area_config.get('y_range', [0, 0])
+        self.z_range = self.area_config.get('z_range', [0, 0])
         
         self.target_frame = "body"
         self.source_frame = "iss_body"
@@ -37,7 +38,7 @@ class AreaMonitor:
         
     def wait_until_departed(self):
         rate = rospy.Rate(10)
-        rospy.loginfo("Waiting for departure from docking_area...")
+        rospy.loginfo("Waiting for departure from %s...", self.area_name)
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is False:
@@ -47,7 +48,7 @@ class AreaMonitor:
             
     def wait_until_reached(self):
         rate = rospy.Rate(10)
-        rospy.loginfo("Waiting for return to docking_area...")
+        rospy.loginfo("Waiting for return to %s...", self.area_name)
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is True:
@@ -56,7 +57,7 @@ class AreaMonitor:
             rate.sleep()
 
 if __name__ == '__main__':
-    rospy.init_node('docking_task_monitor')
+    rospy.init_node('area_monitor')
     
     docking_area_monitor = AreaMonitor(area_name="docking_area")
     docking_area_monitor.wait_until_departed()
