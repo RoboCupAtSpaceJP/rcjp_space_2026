@@ -26,6 +26,21 @@
 ```bash
 roslaunch robocup_atspace_score_manager atspace_score_manager.launch
 ```
+### 各エリアについて
+![areas](img/areas.png)
+- 上記の画像のようなエリアがそれぞれ、ドッキングエリア（赤）、ナビゲーションエリア（緑）、点検エリア（青）となります。
+
+### 対象物体について
+- 固定対象物体は以下の画像に示します。
+
+- airlock
+  - ![areas](img/airlock.png)
+- window
+  - ![areas](img/window.png)
+-atu (Audio Terminal Unit)
+  - ![areas](img/atu.png)
+
+
 
 ### 起動後の流れ
 - 競技者は起動後に競技のプログラムを実行します。10分の時間制限が設けられ、タスクを完遂、または10分をすぎるとスコアマネジャーは終了します。
