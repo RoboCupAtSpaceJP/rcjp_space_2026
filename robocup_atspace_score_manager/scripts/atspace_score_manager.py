@@ -5,7 +5,7 @@ import smach
 import smach_ros
 from smach_files.area_monitor import AreaMonitor
 from smach_files.capture_detector import CaptureDetector
-
+from std_srvs.srv import SetBool, SetBoolResponse
 import os
 import rospkg
 
@@ -63,12 +63,38 @@ class StartTaskState(smach.State):
                              input_keys=['scores_dict'],
                              output_keys=['scores_dict'])
     
+        self.target_name = rospy.get_param('/competition/target_object_name')
+        self.phrase = rospy.get_param('/rules/instruction_phrase')
+        
+        self.instruction_msg = f"{self.phrase}{self.target_name}"
+        self.start_requested = False
+
+    def handle_start_call(self, req):
+        res = SetBoolResponse()
+        if req.data:
+            self.start_requested = True
+            res.success = True
+            res.message = self.instruction_msg
+        else:
+            res.success = False
+            res.message = "Start request was false."
+        return res
+    
+    def wait_for_result(self):
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown() and not self.start_requested:
+            rate.sleep()
+            
     def execute(self, userdata):
         rospy.loginfo('=== Start Task State ===')
+        self.start_requested = False
+        srv = rospy.Service('/start_competition', SetBool, self.handle_start_call)
+        self.wait_for_result()
         try:
             docking_area_monitor = AreaMonitor(area_name="docking_area")
             docking_area_monitor.wait_until_departed()
             userdata.scores_dict['start_task'] = rospy.get_param('/rules/scoring/start_task/departure')
+            srv.shutdown()
             return 'success'
         except Exception as e:
             rospy.logerr('Start task error: %s', str(e))

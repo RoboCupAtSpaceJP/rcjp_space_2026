@@ -1,4 +1,6 @@
 rules:
+  instruction_phrase: "Please take a picture of the "
+
   areas:
     name: ["docking_area", "navigation_area", "search_area"]
     docking_area:
@@ -13,6 +15,7 @@ rules:
       x_range: [10.0, 12.0]
       y_range: [-11.5, -8.0]
       z_range: [4.0, 6.0]
+
   safety_distance: 0.3
 
   search_points:
