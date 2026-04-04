@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
