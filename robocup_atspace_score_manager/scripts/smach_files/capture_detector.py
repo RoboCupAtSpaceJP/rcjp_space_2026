@@ -61,6 +61,7 @@ class CaptureDetector:
             res.success = False
             res.message = f"error: {str(e)}"
         
+        self.srv.shutdown()
         return res
 
     def wait_for_result(self):
