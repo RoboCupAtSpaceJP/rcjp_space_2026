@@ -5,7 +5,7 @@ import smach
 import smach_ros
 from smach_files.area_monitor import AreaMonitor
 from smach_files.capture_detector import CaptureDetector
-from std_srvs.srv import SetBool, SetBoolResponse
+from std_srvs.srv import Trigger, TriggerResponse
 import os
 import rospkg
 
@@ -63,15 +63,16 @@ class StartTaskState(smach.State):
                              input_keys=['scores_dict'],
                              output_keys=['scores_dict'])
     
-        self.target_name = rospy.get_param('/competition/target_object_name')
+        self.fixed_object_name = rospy.get_param('/competition/fixed_object_name')
+        self.portable_object_name = rospy.get_param('/competition/portable_object_name')
         self.phrase = rospy.get_param('/rules/instruction_phrase')
         
-        self.instruction_msg = f"{self.phrase}{self.target_name}"
+        self.instruction_msg = f"{self.phrase}{self.fixed_object_name} and {self.portable_object_name}."
         self.start_requested = False
 
     def handle_start_call(self, req):
-        res = SetBoolResponse()
-        if req.data:
+        res = TriggerResponse()
+        if req:
             self.start_requested = True
             res.success = True
             res.message = self.instruction_msg
@@ -88,7 +89,7 @@ class StartTaskState(smach.State):
     def execute(self, userdata):
         rospy.loginfo('=== Start Task State ===')
         self.start_requested = False
-        srv = rospy.Service('/start_competition', SetBool, self.handle_start_call)
+        srv = rospy.Service('/start_competition', Trigger, self.handle_start_call)
         self.wait_for_result()
         try:
             docking_area_monitor = AreaMonitor(area_name="docking_area")
@@ -130,32 +131,43 @@ class SearchTaskState(smach.State):
         smach.State.__init__(self, outcomes=['success', 'fail'],
                              input_keys=['scores_dict'],
                              output_keys=['scores_dict', 'searched'])
-        self.detector = None
-
+        self.fixed_captured = False
+        self.portable_captured = False
     def execute(self, userdata):
             rospy.loginfo('=== Search Task State ===')
+            self.fixed_captured = False
+            self.portable_captured = False
             try:
-                target_object_type = rospy.get_param('/competition/target_object_type')
-                target_object_name = rospy.get_param('/competition/target_object_name')
-                if self.detector is None:
-                    self.detector = CaptureDetector(object_name=target_object_name)
-                else:
-                    self.detector.target_object = target_object_name
+                fixed_object_name = rospy.get_param('/competition/fixed_object_name')
+                portable_object_name = rospy.get_param('/competition/portable_object_name')
+                detector = None
+                capture_times = 0
+                while not (self.fixed_captured and self.portable_captured) and not rospy.is_shutdown():
+                    if detector is None:
+                        detector = CaptureDetector(target_names=[fixed_object_name, portable_object_name])
+                    else:
+                        detector.target_names = [fixed_object_name, portable_object_name]
+                    result_name, result_status = detector.wait_for_result()
+
+                    if result_status == "capture_succeed":
+                        if result_name == fixed_object_name and not self.fixed_captured:
+                            rospy.loginfo(f'Fixed object [{fixed_object_name}] capture succeeded!')
+                            userdata.scores_dict['search_task'] += rospy.get_param('/rules/scoring/search_task/fixed_object_capture')
+                            self.fixed_captured = True
+                        elif result_name == portable_object_name and not self.portable_captured:
+                            rospy.loginfo(f'Portable object [{portable_object_name}] capture succeeded!')
+                            userdata.scores_dict['search_task'] += rospy.get_param('/rules/scoring/search_task/portable_object_capture')
+                            self.portable_captured = True
+                    else:
+                        rospy.logwarn(f'Capture attempt for {result_name} failed: {result_status}')
+                        if result_name == fixed_object_name: self.fixed_captured = True
+                        if result_name == portable_object_name: self.portable_captured = True
+                    capture_times += 1
+                    if capture_times >= 2:
+                        break
 
                 userdata.searched = True
-
-                result = self.detector.wait_for_result()
-
-                if result == "capture_succeed":
-                    rospy.loginfo('Target captured successfully!')
-                    param_path = f'/rules/scoring/search_task/{target_object_type}_object_capture'
-                    userdata.scores_dict['search_task'] = rospy.get_param(param_path)
-                    userdata.searched = True
-                    return 'success'
-                else:
-                    rospy.logwarn(f'Target capture failed: {result}')
-                    userdata.searched = True
-                    return 'success'
+                return 'success'
 
             except Exception as e:
                 rospy.logerr(f'Search task error: {str(e)}')

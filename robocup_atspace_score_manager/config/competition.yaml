@@ -2,6 +2,6 @@ competition:
   team_name: "teamA"
   trial_number: 1
   stage: 1
-  target_object_type: "fixed"
-  target_object_name: "airlock"
+  fixed_object_name: "airlock"
+  portable_object_name: "laptop"
   time_limit: 600
