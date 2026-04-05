@@ -1,0 +1,6 @@
+# Request: 撮影したオブジェクトの名前
+string target_object_name
+---
+# Response: 判定結果
+bool success
+string message

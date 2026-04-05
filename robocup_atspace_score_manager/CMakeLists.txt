@@ -9,6 +9,7 @@ project(robocup_atspace_score_manager)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  message_generation
   rospy
   tf2_ros
   visualization_msgs
@@ -54,12 +55,11 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message2.msg
 # )
 
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  CaptureReport.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -69,10 +69,7 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   geometry_msgs#   visualization_msgs
-# )
+generate_messages()
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,6 +104,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robocup_atspace_score_manager
 #  CATKIN_DEPENDS geometry_msgs rospy tf2_ros visualization_msgs
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 
