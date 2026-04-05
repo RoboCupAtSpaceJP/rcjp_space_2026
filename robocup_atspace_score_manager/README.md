@@ -51,7 +51,7 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
 
 - スタートタスク
   - 最初にスコアマネージャーが撮影対象(例: Please take the object)を提示し、競技者からのサービスコールを待機します。
-    - サービス名：`/start_competiiton`、　型：`std_srvs/SetBool`、　競技者は`data: true`を送信、　スコアマネージャーはレスポンスの`message`欄に撮影対象を含んだ文章を提示。
+    - サービス名：`/start_competiiton`、　型：`std_srvs/Trigger`、　スコアマネージャーはレスポンスの`message`欄に撮影対象を含んだ文章を提示。
   - その後、ロボットがドッキングエリアを自律的に離脱すると得点が加点されます。
 - ナビゲーションタスク(往路)
   - ロボットはナビゲーションエリアを通過し、点検エリアへ到達すると得点が加点されます。
