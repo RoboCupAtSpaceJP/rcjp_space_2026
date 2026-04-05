@@ -62,7 +62,7 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
   - 固定対象物か可搬対象物を条件を満たして撮影することで得点が加点されます。
   - 条件
     1. 距離条件
-       - ロボットと物体の座標感の直線距離が`distance_threshold`以内であること
+       - ロボットと物体の座標間の直線距離が`distance_threshold`以内であること
     2. 向きの条件
        - ロボットの正面ベクトルと物体方向ベクトルの内積が`dot_product_threshold`以上であること
 - ナビゲーションタスク(往路)
