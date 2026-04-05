@@ -58,7 +58,7 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
   この際、障害物を回避するとさらに加点されます。また、安全距離を維持することで安全ボーナスが加点されます。（TODO）
 - 点検タスク
   - 点検タスクではロボットが対象物を正しく撮影したことをスコアマネージャーに報告する必要があります。
-     - サービス名： `/capture_report`、　型：`std_srvs/SetBool`、　競技者は`data: true`を送信、　スコアマネージャーはレスポンスの`message`欄に撮影の成否結果を提示。
+     - サービス名： `/capture_report`、　型：`robocup_atspace_score_manager/CaptureReport`、　競技者は`target_object_name: {撮影する物体名}`を送信、　スコアマネージャーはレスポンスの`message`欄に撮影の成否結果を提示。撮影する物体名は`rules.yaml`に書いてある名前と一致させる必要があります。2回サービスコールすると撮影の成否に関わらず次のタスクへ遷移します。
   - 固定対象物か可搬対象物を条件を満たして撮影することで得点が加点されます。
   - 条件
     1. 距離条件
