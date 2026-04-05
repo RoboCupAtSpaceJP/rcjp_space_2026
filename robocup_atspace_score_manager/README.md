@@ -76,7 +76,7 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
 ### コンフィグファイルの設定方法
 - このパッケージにはコンフィグファイルが2つあります。`rules.yaml`ではエリア範囲や点数などが定義されており競技者は基本的に編集しないファイルです。
 競技者は`competition.yaml`を編集していただきます。
-`team_name`に競技者のチーム名を設定すると`scores`フォルダに競技のスコアが記録されます。`fixed_object_name`には固定対象物体名、`portable_object_name`には可搬対象物体名を設定してください。`target_object_name`には`rules.yaml`で定義している対象物体名を設定してください。
+`team_name`に競技者のチーム名を設定すると`scores`フォルダに競技のスコアが記録されます。`fixed_object_name`には固定対象物体名、`portable_object_name`には可搬対象物体名を設定してください。対象物体名は`rules.yaml`で定義している対象物体名を設定してください。
 
 <details>
 <summary>設定例 </summary>
@@ -86,8 +86,8 @@ competition:
   team_name: "teamA"
   trial_number: 1
   stage: 1
-  target_object_type: "fixed"
-  target_object_name: "airlock"
+  fixed_object_name: "airlock"
+  portable_object_name: "laptop"
   time_limit: 600
 ```
 </details>
