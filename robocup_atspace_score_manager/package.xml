@@ -61,6 +61,7 @@
   <exec_depend>rospy</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>gazebo_msgs</exec_depend>
   
   <build_depend>message_generation</build_depend>
 

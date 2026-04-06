@@ -1,5 +1,5 @@
 rules:
-  instruction_phrase: "Please take a picture of the "
+  instruction_phrase: "Go to the inspection area, take pictures of "
 
   areas:
     name: ["docking_area", "navigation_area", "search_area"]
@@ -32,10 +32,19 @@ rules:
         rotation: [0.0, 0.0, 1.57]
     portable:
       name: ["laptop", "tape", "ctb"]
+      laptop:
+        position: [11.0, -8.0, 5.0]
+        rotation: [0.0, 0.0, 0.0]
+      tape:
+        position: [11.0, -9.0, 4.8]
+        rotation: [0.0, 0.0, 0.0]
+      ctb:
+        position: [11.5, -10.0, 4.5]
+        rotation: [0.0, 0.0, 0.0]
 
   capture_conditions:
     distance_threshold: 1.0
-    dot_product_threshold: 0.98
+    dot_product_threshold: 0.866
 
   scoring:
     start_task:

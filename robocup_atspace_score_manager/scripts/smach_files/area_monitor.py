@@ -37,25 +37,33 @@ class AreaMonitor:
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             return None
         
-    def wait_until_departed(self):
+    def wait_until_departed(self, timeout=5.0):
         rate = rospy.Rate(10)
         rospy.loginfo("Waiting for departure from %s...", self.area_name)
+        deadline = rospy.Time.now() + rospy.Duration(timeout)
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is False:
                 rospy.loginfo("Departure confirmed.")
-                break
+                return True
+            if rospy.Time.now() >= deadline:
+                return False
             rate.sleep()
-            
-    def wait_until_reached(self):
+        return False
+
+    def wait_until_reached(self, timeout=5.0):
         rate = rospy.Rate(10)
         rospy.loginfo("Waiting for reach to %s...", self.area_name)
+        deadline = rospy.Time.now() + rospy.Duration(timeout)
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is True:
                 rospy.loginfo("Reach confirmed.")
-                break
+                return True
+            if rospy.Time.now() >= deadline:
+                return False
             rate.sleep()
+        return False
 
 if __name__ == '__main__':
     rospy.init_node('area_monitor')

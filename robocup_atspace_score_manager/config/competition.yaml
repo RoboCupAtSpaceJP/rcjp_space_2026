@@ -4,4 +4,4 @@ competition:
   stage: 1
   fixed_object_name: "airlock"
   portable_object_name: "laptop"
-  time_limit: 600
+  time_limit: 900

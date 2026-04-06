@@ -1,6 +1,24 @@
 <launch>
     <rosparam command="load" file="$(find robocup_atspace_score_manager)/config/competition.yaml" />
     <rosparam command="load" file="$(find robocup_atspace_score_manager)/config/rules.yaml" />
+
+    <!-- Portable object args -->
+    <arg name="portable_object_name" default="laptop" />
+    <arg name="portable_object_urdf" default="$(find description)/model/custom_object_01/custom_object_01.urdf" />
+    <arg name="spawn_portable_object" default="true" />
+
+    <!-- Portable object: spawn into Gazebo + publish TF (cleanup on shutdown) -->
+    <!-- spawn_portable_object:=false で採点側スポーンを無効化（シム側でスポーン済みの場合） -->
+    <param name="portable_object_description" textfile="$(arg portable_object_urdf)" />
+    <node name="portable_object_tf" pkg="robocup_atspace_score_manager" type="portable_object_tf.py" output="screen">
+        <param name="model_name"     value="$(arg portable_object_name)" />
+        <param name="world_frame"    value="base" />
+        <param name="base_frame"     value="$(arg portable_object_name)" />
+        <param name="updateFreqHz"   value="10" />
+        <param name="urdf_param"     value="portable_object_description" />
+        <param name="spawn_enabled"  value="$(arg spawn_portable_object)" />
+    </node>
+
     <node name="area_marker_publisher" pkg="robocup_atspace_score_manager" type="area_marker.py" output="screen"/>
     <node name="search_point_tf_publisher" pkg="robocup_atspace_score_manager" type="search_point.py" output="screen"/>
 

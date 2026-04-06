@@ -22,7 +22,8 @@ class CaptureDetector:
         self.iss_frame = "iss_body"
         
         self.result = None
-        self.srv = rospy.Service('/capture_report', CaptureReport, self.handle_capture_report)
+        self.last_captured_name = ""
+        self.srv = rospy.Service('/report_capture', CaptureReport, self.handle_capture_report)
 
     def get_unit_vector(self, transform):
         q = [transform.transform.rotation.x, transform.transform.rotation.y,
@@ -56,8 +57,9 @@ class CaptureDetector:
             self.result = "capture_failed"
             if success_object:
                 res.success = True
-                res.message = f"capture_succeeded: {success_object}"
-                rospy.loginfo(f"Capture Succeeded for: {success_object}")
+                res.message = f"capture_succeeded: {req.target_object_name}"
+                self.result = "capture_succeed"
+                rospy.loginfo(f"Capture Succeeded for: {req.target_object_name}")
             else:
                 res.success = False
                 res.message = "capture_failed: no target in range"
@@ -71,9 +73,12 @@ class CaptureDetector:
         
         return res
 
-    def wait_for_result(self):
+    def wait_for_result(self, timeout=5.0):
         self.result = None
         rate = rospy.Rate(10)
+        deadline = rospy.Time.now() + rospy.Duration(timeout)
         while not rospy.is_shutdown() and self.result is None:
+            if rospy.Time.now() >= deadline:
+                return self.last_captured_name, "timeout"
             rate.sleep()
         return self.last_captured_name, self.result
