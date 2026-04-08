@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Auto-generated env-hook for robocup_atspace_score_manager
+# Adds the package's models/ directory to GAZEBO_MODEL_PATH so that
+# model:// URIs are resolved by Gazebo without hardcoded absolute paths.
+
+_pkg_dir=$(rospack find robocup_atspace_score_manager 2>/dev/null)
+if [ -n "$_pkg_dir" ] && [ -d "$_pkg_dir/models" ]; then
+  if [ -z "$GAZEBO_MODEL_PATH" ]; then
+    export GAZEBO_MODEL_PATH="$_pkg_dir/models"
+  else
+    export GAZEBO_MODEL_PATH="$_pkg_dir/models:$GAZEBO_MODEL_PATH"
+  fi
+fi
+unset _pkg_dir

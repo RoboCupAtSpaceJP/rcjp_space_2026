@@ -1,0 +1,7 @@
+openspec/
+robocup_atspace_score_manager/scores/
+tmp/
+.claude/
+.gemini/
+.github/
+.CLAUDE.md

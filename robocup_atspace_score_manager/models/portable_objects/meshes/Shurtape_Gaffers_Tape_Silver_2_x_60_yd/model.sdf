@@ -1,0 +1,20 @@
+<sdf version="1.6">
+  <model name="Shurtape_Gaffers_Tape_Silver_2_x_60_yd">
+    <link name="link_0">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://Shurtape_Gaffers_Tape_Silver_2_x_60_yd/meshes/model.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="collision_0">
+        <geometry>
+          <mesh>
+            <uri>model://Shurtape_Gaffers_Tape_Silver_2_x_60_yd/meshes/model.obj</uri>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

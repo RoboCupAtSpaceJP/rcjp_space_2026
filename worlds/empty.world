@@ -104,7 +104,7 @@
     </actor> -->
 
     <!-- Human Model -->
-    <model name="closed_arm_human">
+    <!-- <model name="closed_arm_human">
       <static>true</static>
       <pose>11 -7 4.9 3.1415926535898 0 -1.5707963267949 </pose>
       <link name="human_link">
@@ -117,7 +117,7 @@
         </visual>
       </link>
     </model>
-  
+   -->
   </world>
 </sdf>
 
