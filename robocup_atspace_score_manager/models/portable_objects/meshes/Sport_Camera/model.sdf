@@ -1,21 +1,19 @@
-<?xml version="1.0" ?>
-<sdf version="1.6">
-  <model name="sport_camera">
-    <static>false</static>
-    <link name="link">
-      <visual name="visual">
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='Sport_Camera'>
+    <pose>0 0 0.5 0 0 0</pose>
+    <link name='link'>
+      <visual name='visual'>
         <geometry>
           <mesh>
-            <uri>file:///home/nvidia/IB2/Int-Ball2_platform_simulator/src/rcjp_space_2026/robocup_atspace_score_manager/models/portable_objects/meshes/Sport_Camera/Sport_Camera_obj.obj</uri>
-            <scale>0.001 0.001 0.001</scale>
+            <uri>model://Sport_Camera/Sport_Camera_dae.dae</uri>
           </mesh>
         </geometry>
       </visual>
-      <collision name="collision">
+      <collision name='collision'>
         <geometry>
           <mesh>
-            <uri>file:///home/nvidia/IB2/Int-Ball2_platform_simulator/src/rcjp_space_2026/robocup_atspace_score_manager/models/portable_objects/meshes/Sport_Camera/Sport_Camera_obj.obj</uri>
-            <scale>0.001 0.001 0.001</scale>
+            <uri>model://Sport_Camera/Sport_Camera_dae.dae</uri>
           </mesh>
         </geometry>
       </collision>

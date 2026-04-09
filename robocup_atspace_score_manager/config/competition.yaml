@@ -1,7 +1,10 @@
 competition:
   team_name: "teamA"
   trial_number: 1
-  stage: 1
+  stage: 2
   fixed_object_name: "airlock"
   portable_object_name: "laptop"
+  human_assignments:  # 人間障害物の配置設定（最大2人）
+    human_pos_1: "" # 見た目を変えたい場合は、rules.yamlに定義したテンプレート名（person_a 等）を記述します。
+    human_pos_2: "person_b" # 出現させたくない場所は "" (空文字) または null にします。
   time_limit: 900

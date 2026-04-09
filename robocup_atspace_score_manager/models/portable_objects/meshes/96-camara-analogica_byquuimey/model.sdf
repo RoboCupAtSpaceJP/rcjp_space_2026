@@ -7,19 +7,26 @@
         <geometry>
           <mesh>
             <uri>model://96-camara-analogica_byquuimey/Camara_Analogica.obj</uri>
-            <scale>1 1 1</scale>
           </mesh>
         </geometry>
+        <transparency>0</transparency>
+        <cast_shadows>false</cast_shadows>
         <material>
-          <ambient>0.5 0.5 0.5 1</ambient>
-          <diffuse>0.5 0.5 0.5 1</diffuse>
+          <render_order>1</render_order>
+          <lighting>true</lighting>
+          
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.15 0.15 0.15 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+          <emissive>0 0 0 1</emissive>
+          
+          <shader type="pixel"/>
         </material>
       </visual>
       <collision name="collision">
         <geometry>
           <mesh>
             <uri>model://96-camara-analogica_byquuimey/Camara_Analogica.obj</uri>
-            <scale>1 1 1</scale>
           </mesh>
         </geometry>
       </collision>

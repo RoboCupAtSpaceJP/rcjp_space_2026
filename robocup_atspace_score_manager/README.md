@@ -42,24 +42,36 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
   - atu (Audio Terminal Unit)
     - ![areas](img/atu.png)
 
-- 可搬対象物体 (laptopなど)
-  - ※現在、専用のURDFモデルがないため、代わりのモデル（`custom_object_01` / box形状）をスポーンさせて対応しています。
+- 可搬対象物体
 
+  - laptop
+    - ![laptop](img/laptop.png)
+  - tape
+    - ![tape](img/tape.png)
+  - camera
+    - ![camera](img/camera.png)
 
+  - ※現在、cameraのモデルが半透明になってしまっています。(TODO)
 
 ### 起動後の流れ
-- 競技者は起動後に競技のプログラムを実行します。10分の時間制限が設けられ、タスクを完遂、または10分をすぎるとスコアマネジャーは終了します。
+- 競技者はシミュレーター起動後にスコアマネージャーを起動し、その後、競技のプログラムを実行します。
+  - スコアマネージャーを起動に宇宙飛行士や可搬対象物が出現します。
 
 - スタートタスク
-  - 最初にスコアマネージャーが撮影対象(例: Please take the object)を提示し、競技者からのサービスコールを待機します。
+  - 最初にスコアマネージャーが撮影対象(例: Go to the inspection area, take pictures of 〇〇 (固定対象物) and 〇〇 (可搬対
+象物), and return.)を提示し、競技者からのサービスコールを待機します。
     - サービス名：`/competition_start`、　型：`std_srvs/Trigger`、　スコアマネージャーはレスポンスの`message`欄に撮影対象を含んだ文章を提示。
+  - スコアマネージャーはサービスコールを受信したら、時間の計測を開始します。タスクを完遂、または[competition.yaml](config/competition.yaml)の`time_limit`で定義した時間制限をすぎるとスコアマネジャーは終了します。
   - その後、ロボットがドッキングエリアを自律的に離脱すると得点が加点されます。
 - ナビゲーションタスク(往路)
   - ロボットはナビゲーションエリアを通過し、点検エリアへ到達すると得点が加点されます。
   この際、障害物を回避するとさらに加点されます。また、安全距離を維持することで安全ボーナスが加点されます。（TODO）
 - 点検タスク
   - 点検タスクではロボットが対象物を正しく撮影したことをスコアマネージャーに報告する必要があります。
-     - サービス名： `/report_capture`、　型：`robocup_atspace_score_manager/CaptureReport`、　競技者は`target_object_name: {撮影する物体名}`を送信、　スコアマネージャーはレスポンスの`message`欄に撮影の成否結果を提示。撮影する物体名は`rules.yaml`に書いてある名前と一致させる必要があります。
+     - サービス名： `/report_capture`
+     - 型：`robocup_atspace_score_manager/CaptureReport`
+     - 競技者は`target_object_name: {撮影する物体名}`を送信、　スコアマネージャーはレスポンスの`message`欄に撮影の成否結果を提示。
+     - 撮影する物体名は`rules.yaml`に書いてある名前と一致させる必要があります。
   - 固定対象物か可搬対象物を条件を満たして撮影することで得点が加点されます。
   - 条件
     1. 距離条件
@@ -67,17 +79,21 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
     2. 向きの条件
        - ロボットの正面ベクトルと物体方向ベクトルの内積が`dot_product_threshold`以上(0.866以上、角度にして30度以内)であること
 - ナビゲーションタスク(復路)
-  - ロボットはナビゲーションエリアを通過し、ドッキングエリアへ到達すると得点が加点されます。
+  - ロボットはナビゲーションエリアを通過するとし、ドッキングエリアへ到達すると得点が加点されます。
   この際、障害物を回避するとさらに加点されます。また、安全距離を維持することで安全ボーナスが加点されます。（TODO）
 - ドッキングタスク
-    - ドッキングステーションへ自律ドッキングすることができると加点されます。（TODO）
+    - ドッキングエリアに到達すると加点されます。（TODO）
 - 時間ボーナス
     - 時間制限(10分) - タスク完了時間分、点数が加点されます。（最大10点）（TODO）
 
 ### コンフィグファイルの設定方法
-- このパッケージにはコンフィグファイルが2つあります。`rules.yaml`ではエリア範囲や点数などが定義されており競技者は基本的に編集しないファイルです。
-競技者は`competition.yaml`を編集していただきます。
-`team_name`に競技者のチーム名を設定すると`scores`フォルダに競技のスコアが記録されます。`fixed_object_name`には固定対象物体名、`portable_object_name`には可搬対象物体名を設定してください。対象物体名は`rules.yaml`で定義している対象物体名を設定してください。
+- このパッケージにはコンフィグファイルが2つあります。
+- `rules.yaml`
+  - エリア範囲や点数などが定義されており競技者は基本的に編集しないファイルです。
+  - 障害物(宇宙飛行士)や可搬対象物のモデルや出現位置、角度なども変更できます。
+- `competition.yaml`
+  - 競技者が編集するファイルです。
+  - `team_name`に競技者のチーム名を設定すると`scores`フォルダに競技のスコアが記録されます。`fixed_object_name`には固定対象物体名、`portable_object_name`には可搬対象物体名を設定してください。対象物体名は`rules.yaml`で定義している対象物体名を設定してください。
 
 <details>
 <summary>設定例 </summary>
@@ -86,18 +102,22 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
 competition:
   team_name: "teamA"
   trial_number: 1
-  stage: 1
+  stage: 2
   fixed_object_name: "airlock"
-  portable_object_name: "laptop"
-  time_limit: 600
+  portable_object_name: "camera"
+  human_assignments:  # 人間障害物の配置設定（最大2人）
+    human_pos_1: "" # 見た目を変えたい場合は、rules.yamlに定義したテンプレート名（person_a 等）を記述します。
+    human_pos_2: "person_b" # 出現させたくない場所は "" (空文字) または null にします。
+  time_limit: 900
 ```
 </details>
 
+## 新規モデルの追加方法
+宇宙飛行士や可搬対象物のモデルは`models`ディレクトリに配置してください。
+その後、`rules.yaml`の`portable_objects`や`human_templates`に追加した後、`competition.yaml`を書き換えてlaucnhを実行してください。
 
 ### TODO
 - 障害物を回避した際の追加点の実装
+- ドッキングエリアへ到達すると加点の実装
 - 安全距離の維持による追加点の実装
-- 未知物体の対応
-- ドッキングステーションへ自律ドッキングした際の追加点の実装
 - 時間ボーナス
-- laptop用URDFモデルの作成（alpha値不正の修正を含む）
