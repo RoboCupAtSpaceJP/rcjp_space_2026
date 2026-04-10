@@ -9,11 +9,11 @@ rules:
       z_range: [4.0, 4.3]
     navigation_area:
       x_range: [10.0, 12.0]
-      y_range: [-6.5, -3.8]
+      y_range: [-8.0, -5.0]
       z_range: [4.0, 6.0]
     search_area:
       x_range: [10.0, 12.0]
-      y_range: [-11.5, -6.5]
+      y_range: [-11.5, -8.0]
       z_range: [4.0, 6.0]
 
   safety_distance: 0.3
@@ -64,12 +64,13 @@ rules:
 
     # 固定された場所の定義（コリジョン判定はこの名前 human_pos_1/2 で行う）
     human_obstacles:
+      publish_tf: true
       name: ["human_pos_1", "human_pos_2"]
       human_pos_1:
-        position: [11.0, -4.5, 5.0]
-        rotation: [0.0, 0.0, 0.0]
-      human_pos_2:
         position: [11.2, -6.0, 5.0]
+        rotation: [0.0, 0.0, 1.57]
+      human_pos_2:
+        position: [11.2, -7.0, 5.0]
         rotation: [0.0, 0.0, 1.57]
 
   capture_conditions:

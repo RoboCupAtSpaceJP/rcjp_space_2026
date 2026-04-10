@@ -2,6 +2,7 @@
 
 import rospy
 import tf2_ros
+import time
 
 class AreaMonitor:
     def __init__(self, area_name="docking_area"):
@@ -38,31 +39,29 @@ class AreaMonitor:
             return None
         
     def wait_until_departed(self, timeout=5.0):
-        rate = rospy.Rate(10)
         rospy.loginfo("Waiting for departure from %s...", self.area_name)
-        deadline = rospy.Time.now() + rospy.Duration(timeout)
+        deadline = time.time() + timeout
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is False:
                 rospy.loginfo("Departure confirmed.")
                 return True
-            if rospy.Time.now() >= deadline:
+            if time.time() >= deadline:
                 return False
-            rate.sleep()
+            time.sleep(0.1)
         return False
 
     def wait_until_reached(self, timeout=5.0):
-        rate = rospy.Rate(10)
         rospy.loginfo("Waiting for reach to %s...", self.area_name)
-        deadline = rospy.Time.now() + rospy.Duration(timeout)
+        deadline = time.time() + timeout
         while not rospy.is_shutdown():
             status = self.is_inside_dock()
             if status is True:
                 rospy.loginfo("Reach confirmed.")
                 return True
-            if rospy.Time.now() >= deadline:
+            if time.time() >= deadline:
                 return False
-            rate.sleep()
+            time.sleep(0.1)
         return False
 
 if __name__ == '__main__':

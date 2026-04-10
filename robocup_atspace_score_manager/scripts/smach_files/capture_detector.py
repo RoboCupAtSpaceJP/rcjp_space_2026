@@ -2,6 +2,7 @@
 
 import rospy
 import tf2_ros
+import time
 import numpy as np
 from robocup_atspace_score_manager.srv import CaptureReport, CaptureReportResponse
 
@@ -75,10 +76,9 @@ class CaptureDetector:
 
     def wait_for_result(self, timeout=5.0):
         self.result = None
-        rate = rospy.Rate(10)
-        deadline = rospy.Time.now() + rospy.Duration(timeout)
+        deadline = time.time() + timeout
         while not rospy.is_shutdown() and self.result is None:
-            if rospy.Time.now() >= deadline:
+            if time.time() >= deadline:
                 return self.last_captured_name, "timeout"
-            rate.sleep()
+            time.sleep(0.1)
         return self.last_captured_name, self.result

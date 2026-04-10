@@ -23,6 +23,7 @@ class SDFSpawner:
         self.target_frame = "iss_body"
         self.iss_model_name = 'iss'
         self.spawned = False
+        self.publish_tf_enabled = True
         self.latest_obj_pose = None
         self.latest_iss_pose = None
         self.br = tf.TransformBroadcaster()
@@ -69,6 +70,11 @@ class SDFSpawner:
              rospy.logerr(f"[{self.obs_name}] Parameter NOT FOUND: {rules_param_path}")
         
         obj_config = rospy.get_param(rules_param_path, {})
+
+        # TF publish制御 (human_obstaclesのみ、デフォルトTrue)
+        self.publish_tf_enabled = rospy.get_param(
+            f"/rules/search_points/{self.category}/publish_tf", True
+        )
 
         # offsetの決定 (YAML優先)
         if args.offset is not None:
@@ -123,7 +129,7 @@ class SDFSpawner:
 
     def _setup_monitoring_only(self):
         rospy.Subscriber('/gazebo/model_states', ModelStates, self.gazebo_callback)
-        if self.category in ["portable_objects", "portable"] or (self.category == "human_obstacles" and self.spawned):
+        if self.category in ["portable_objects", "portable"] or (self.category == "human_obstacles" and self.spawned and self.publish_tf_enabled):
             rospy.Timer(rospy.Duration(0.1), self.publish_tf)
         rospy.on_shutdown(self.cleanup)
         rospy.loginfo(f"Node Initialized: {self.obs_name} (Spawned: {self.spawned})")
