@@ -7,7 +7,7 @@
 - Int‑Ball2 シミュレータ Docker環境以外での動作確認はできていません。理論上は動作します。
 1. ROSの`src`フォルダに移動します．
     ```sh
-    $ cd ~/{rosのワークスペース}/src/
+    $ cd /home/nvidia/IB2/Int-Ball2_platform_simulator/src
     ```
 
 2. 本パッケージをcloneします．
@@ -17,9 +17,9 @@
 
 3. パッケージをコンパイルします．
    ```bash
-   $ cd ~/{rosのワークスペース}/
+   $ cd /home/nvidia/IB2/Int-Ball2_platform_simulator
    $ catkin_make
-   $ source ~/{rosのワークスペース}/devel/setup.bash
+   $ source /home/nvidia/IB2/Int-Ball2_platform_simulator/devel/setup.bash
    ```
 
 ### スコアマネージャーの起動方法
