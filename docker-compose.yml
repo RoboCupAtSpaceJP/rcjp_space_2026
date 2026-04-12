@@ -24,7 +24,7 @@ services:
       - /run
       - /run/lock
     volumes: 
-      - ${PWD}/ib2_user_ws:${PWD}/ib2_user_ws
+      - ${PWD}/shared_data_sim:${PWD}/shared_data_sim
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/.X11-unix:/tmp/.X11-unix  # X11ソケット
       - /run/user/${UID}:/run/user/${UID}  # WaylandソケットやDBusがここにあることも
