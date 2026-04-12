@@ -86,38 +86,6 @@
     </plugin>
     <plugin name="ib2_route_display_plugin"     filename="libib2_route_display_plugin.so"/>
 
-    <!-- Human Model -->
-    <!-- <actor name="human_actor">
-      <pose>11 -7 4.9 3.1415926535898 0 1.5707963267949 </pose>
-      <skin>
-        <filename>walk.dae</filename>
-      </skin>
-      <animation name="idle">
-        <filename>walk.dae</filename>
-        <interpolate_x>true</interpolate_x>
-      </animation>
-      <script>
-        <loop>false</loop>
-        <auto_start>false</auto_start>
-      </script>
-      <static>true</static>
-    </actor> -->
-
-    <!-- Human Model -->
-    <!-- <model name="closed_arm_human">
-      <static>true</static>
-      <pose>11 -7 4.9 3.1415926535898 0 -1.5707963267949 </pose>
-      <link name="human_link">
-        <visual name="human_visual">
-          <geometry>
-            <mesh>
-              <uri>file:///home/nvidia/IB2/Int-Ball2_platform_simulator/src/platform_sim/simulation/ib2_gazebo/worlds/walk_closed_arm.dae</uri>
-            </mesh>
-          </geometry>
-        </visual>
-      </link>
-    </model>
-   -->
   </world>
 </sdf>
 
