@@ -3,7 +3,7 @@
   <model name="Travel_Mate_P_series_Notebook">
     <static>true</static>
     <link name="link_0">
-      <pose>0 0 0 3.14 0 1.57</pose>
+      <pose>0 0 0 3.14 0 0</pose>
       <visual name="visual">
         <geometry>
           <mesh>

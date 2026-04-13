@@ -5,6 +5,7 @@
       <gravity>0</gravity>
       
       <visual name='visual'>
+        <pose>0 0 0 3.14159 0 0</pose>
         <geometry>
           <mesh>
             <uri>__MESH_URI__</uri>
