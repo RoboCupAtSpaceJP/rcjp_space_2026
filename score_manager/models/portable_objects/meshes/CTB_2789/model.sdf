@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="CTB_2789">
+    <static>true</static>
+    <link name="link">
+      <pose>0 0 0 3.14 0 0</pose>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://CTB_2789/CTB_2789.dae</uri>
+            <scale>0.2 0.2 0.2</scale>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://CTB_2789/CTB_2789.dae</uri>
+            <scale>0.2 0.2 0.2</scale>
+          </mesh>
+        </geometry>
+      </collision>
+    </link>
+  </model>
+</sdf>

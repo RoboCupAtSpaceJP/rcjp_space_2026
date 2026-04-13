@@ -13,9 +13,21 @@
         <param name="name"     value="human_pos_1" />
     </node>
 
+    <!-- スコア対象の可搬物体 (competition.yaml: portable_object_name) -->
     <node name="spawn_portable_item" pkg="score_manager" type="spawn.py" output="screen">
         <param name="category" value="portable_objects" />
         <param name="name"     value="auto" />
+    </node>
+
+    <!-- ダミー可搬物体 (competition.yaml: dummy_objects[0], [1]) -->
+    <!-- dummy_objects のリスト長より大きいインデックスは自動的にスキップされます -->
+    <node name="spawn_dummy_0" pkg="score_manager" type="spawn.py" output="screen">
+        <param name="category" value="portable_objects" />
+        <param name="name"     value="dummy_0" />
+    </node>
+    <node name="spawn_dummy_1" pkg="score_manager" type="spawn.py" output="screen">
+        <param name="category" value="portable_objects" />
+        <param name="name"     value="dummy_1" />
     </node>
 
     <node name="area_marker_publisher" pkg="score_manager" type="area_marker.py" output="screen"/>

@@ -1,6 +1,8 @@
 <sdf version="1.6">
   <model name="Shurtape_Gaffers_Tape_Silver_2_x_60_yd">
+    <static>true</static>
     <link name="link_0">
+      <pose>0 0 0 0 0 1.57 0</pose>
       <visual name="visual">
         <geometry>
           <mesh>

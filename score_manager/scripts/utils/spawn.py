@@ -58,6 +58,20 @@ class SDFSpawner:
         if self.category == "portable_objects" and self.obs_name == "auto":
             self.obs_name = rospy.get_param("/competition/portable_object_name", "laptop")
             rospy.loginfo(f"[{rospy.get_name()}] Auto-selected: {self.obs_name}")
+        elif self.category == "portable_objects" and self.obs_name.startswith("dummy_"):
+            try:
+                idx = int(self.obs_name.split("_")[1])
+            except (IndexError, ValueError):
+                rospy.logwarn(f"[{rospy.get_name()}] Invalid dummy index in name '{self.obs_name}'. Skipping.")
+                self._setup_monitoring_only()
+                return
+            dummy_list = rospy.get_param("/competition/dummy_objects", [])
+            if not isinstance(dummy_list, list) or idx >= len(dummy_list):
+                rospy.loginfo(f"[{rospy.get_name()}] dummy_objects[{idx}] not defined. Skipping spawn.")
+                self._setup_monitoring_only()
+                return
+            self.obs_name = dummy_list[idx]
+            rospy.loginfo(f"[{rospy.get_name()}] Dummy object selected: {self.obs_name}")
         
         # --- 5. 割り当てチェックロジック (Human Obstacles用) ---
         if self.category == "human_obstacles":

@@ -112,8 +112,6 @@ Visualization Manager:
           Value: true
         cameraR_link:
           Value: true
-        custom_object_01_body:
-          Value: true
         dock_body:
           Value: true
         human_pos_2:
@@ -143,8 +141,6 @@ Visualization Manager:
               {}
             imu_link:
               {}
-          custom_object_01_body:
-            {}
           iss_body:
             airlock:
               {}
@@ -250,31 +246,6 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        custom_object_01_body:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-      Name: RobotModel
-      Robot Description: custom_object_01_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /area_marker_array
