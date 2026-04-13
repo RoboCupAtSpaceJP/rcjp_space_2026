@@ -29,6 +29,8 @@ class SDFSpawner:
         self.latest_iss_pose = None
         self.br = tf.TransformBroadcaster()
         self.mesh_abs_path = None
+        self.mesh_scale = (1.0, 1.0, 1.0)
+        self.marker_published = False
         self.marker_pub = rospy.Publisher('/spawned_object_markers', Marker, queue_size=1, latch=True)
         
         # --- 2. 起動直後のパラメータサーバー反映待ち ---
@@ -148,8 +150,6 @@ class SDFSpawner:
         rospy.Subscriber('/gazebo/model_states', ModelStates, self.gazebo_callback)
         if self.category in ["portable_objects", "portable"] or (self.category == "human_obstacles" and self.spawned and self.publish_tf_enabled):
             rospy.Timer(rospy.Duration(0.1), self.publish_tf)
-        if self.spawned and self.mesh_abs_path:
-            self.publish_mesh_marker()
         rospy.on_shutdown(self.cleanup)
         rospy.loginfo(f"Node Initialized: {self.obs_name} (Spawned: {self.spawned})")
 
@@ -161,16 +161,16 @@ class SDFSpawner:
         marker.id = 0
         marker.type = Marker.MESH_RESOURCE
         marker.action = Marker.ADD
-        marker.pose.orientation.w = 1.0
-        marker.scale.x = 1.0
-        marker.scale.y = 1.0
-        marker.scale.z = 1.0
+        marker.scale.x = self.mesh_scale[0]
+        marker.scale.y = self.mesh_scale[1]
+        marker.scale.z = self.mesh_scale[2]
         marker.color.r = 1.0
         marker.color.g = 1.0
         marker.color.b = 1.0
         marker.color.a = 1.0
         marker.mesh_resource = f"file://{self.mesh_abs_path}"
         marker.mesh_use_embedded_materials = True
+        marker.pose.orientation.w = 1.0
         marker.lifetime = rospy.Duration(0)
         self.marker_pub.publish(marker)
 
@@ -204,6 +204,10 @@ class SDFSpawner:
         correction = tft.quaternion_from_euler(np.pi, 0, 0)
         rel_ori = tft.quaternion_multiply(rel_ori, correction)
         self.br.sendTransform(rel_pos, rel_ori, rospy.Time.now(), self.obs_name, self.target_frame)
+        # TFが確立した最初のタイミングでRvizマーカーを発行
+        if not self.marker_published and self.mesh_abs_path:
+            self.publish_mesh_marker()
+            self.marker_published = True
 
     def wait_for_iss(self):
         rate = rospy.Rate(1)
@@ -245,6 +249,13 @@ class SDFSpawner:
                 break
         if model_sdf_path:
             with open(model_sdf_path, 'r') as f: sdf_xml = f.read()
+            # Rvizマーカー用に実メッシュファイルパスとスケールをSDFから取得
+            uri_match = re.search(r'<uri>model://[^/\s<]+/([^<]+)</uri>', sdf_xml)
+            if uri_match:
+                self.mesh_abs_path = os.path.join(current_model_dir, uri_match.group(1))
+            scale_match = re.search(r'<scale>([\d.]+)\s+([\d.]+)\s+([\d.]+)</scale>', sdf_xml)
+            if scale_match:
+                self.mesh_scale = (float(scale_match.group(1)), float(scale_match.group(2)), float(scale_match.group(3)))
             sdf_xml = re.sub(r'model://[^/\s<]+', f"file://{current_model_dir}", sdf_xml)
             sdf_xml = re.sub(r'<model name=[\'\"](.*?)[\'\"]>', f'<model name="{self.obs_name}">', sdf_xml, count=1)
         else:
