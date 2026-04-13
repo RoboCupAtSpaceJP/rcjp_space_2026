@@ -5,7 +5,7 @@ rules:
     name: ["docking_area", "navigation_area", "search_area"]
     docking_area:
       x_range: [10.8, 11.0]
-      y_range: [-3.8, -3.3]
+      y_range: [-3.64, -3.14]
       z_range: [4.0, 4.3]
     navigation_area:
       x_range: [10.0, 12.0]

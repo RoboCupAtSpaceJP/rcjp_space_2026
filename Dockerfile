@@ -9,4 +9,6 @@ RUN cd /home/nvidia/IB2/Int-Ball2_platform_simulator/src && \
     cd /home/nvidia/IB2/Int-Ball2_platform_simulator && \
     /bin/bash -c "source /opt/ros/noetic/setup.bash && catkin_make"
 
-RUN mv /home/nvidia/IB2/Int-Ball2_platform_simulator/srcrcjp_space_2026/worlds/* IB2/Int-Ball2_platform_simulator/src/platform_sim/simulation/ib2_gazebo/worlds/
+RUN mv /home/nvidia/IB2/Int-Ball2_platform_simulator/src/rcjp_space_2026/worlds/* /home/nvidia/IB2/Int-Ball2_platform_simulator/src/platform_sim/simulation/ib2_gazebo/worlds/
+
+RUN mv /home/nvidia/IB2/Int-Ball2_platform_simulator/src/rcjp_space_2026/rviz/* /home/nvidia/IB2/Int-Ball2_platform_simulator/src/platform_sim/description/rviz/

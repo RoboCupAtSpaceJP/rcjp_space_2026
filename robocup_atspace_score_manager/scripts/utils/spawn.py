@@ -12,6 +12,7 @@ import time
 from gazebo_msgs.srv import SpawnModel, DeleteModel
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Pose
+from visualization_msgs.msg import Marker
 
 class SDFSpawner:
     def __init__(self, args):
@@ -27,6 +28,8 @@ class SDFSpawner:
         self.latest_obj_pose = None
         self.latest_iss_pose = None
         self.br = tf.TransformBroadcaster()
+        self.mesh_abs_path = None
+        self.marker_pub = rospy.Publisher('/spawned_object_markers', Marker, queue_size=1, latch=True)
         
         # --- 2. 起動直後のパラメータサーバー反映待ち ---
         timeout = 10.0
@@ -131,8 +134,31 @@ class SDFSpawner:
         rospy.Subscriber('/gazebo/model_states', ModelStates, self.gazebo_callback)
         if self.category in ["portable_objects", "portable"] or (self.category == "human_obstacles" and self.spawned and self.publish_tf_enabled):
             rospy.Timer(rospy.Duration(0.1), self.publish_tf)
+        if self.spawned and self.mesh_abs_path:
+            self.publish_mesh_marker()
         rospy.on_shutdown(self.cleanup)
         rospy.loginfo(f"Node Initialized: {self.obs_name} (Spawned: {self.spawned})")
+
+    def publish_mesh_marker(self):
+        marker = Marker()
+        marker.header.frame_id = self.obs_name
+        marker.header.stamp = rospy.Time.now()
+        marker.ns = self.obs_name
+        marker.id = 0
+        marker.type = Marker.MESH_RESOURCE
+        marker.action = Marker.ADD
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = 1.0
+        marker.scale.y = 1.0
+        marker.scale.z = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 1.0
+        marker.color.b = 1.0
+        marker.color.a = 1.0
+        marker.mesh_resource = f"file://{self.mesh_abs_path}"
+        marker.mesh_use_embedded_materials = True
+        marker.lifetime = rospy.Duration(0)
+        self.marker_pub.publish(marker)
 
     def gazebo_callback(self, msg):
         # 名前リストの中から正確に自分の名前を探す
@@ -160,6 +186,9 @@ class SDFSpawner:
         m_rel = np.dot(tft.inverse_matrix(m_iss), m_obj)
         rel_pos = tft.translation_from_matrix(m_rel)
         rel_ori = tft.quaternion_from_matrix(m_rel)
+        # 物体フレームのX軸周りに180°回転し、iss_bodyのZ下向き正に合わせる
+        correction = tft.quaternion_from_euler(np.pi, 0, 0)
+        rel_ori = tft.quaternion_multiply(rel_ori, correction)
         self.br.sendTransform(rel_pos, rel_ori, rospy.Time.now(), self.obs_name, self.target_frame)
 
     def wait_for_iss(self):
@@ -191,6 +220,7 @@ class SDFSpawner:
     def do_spawn(self):
         base_meshes_dir = os.path.join(self.pkg_path, 'models', self.category, 'meshes')
         mesh_abs_path = os.path.join(base_meshes_dir, self.mesh_filename)
+        self.mesh_abs_path = mesh_abs_path
         mesh_dir = os.path.dirname(mesh_abs_path)
         model_sdf_path = None
         for d in [mesh_abs_path, mesh_dir, os.path.dirname(mesh_dir)]:

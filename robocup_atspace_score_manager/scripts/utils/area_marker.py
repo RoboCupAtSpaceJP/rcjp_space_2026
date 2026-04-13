@@ -25,7 +25,7 @@ def create_marker(name, ranges, marker_id):
     marker.scale.y = abs(y_max - y_min)
     marker.scale.z = abs(z_max - z_min)
 
-    marker.color.a = 0.5
+    marker.color.a = 0.2
     if "docking" in name:
         marker.color.r, marker.color.g, marker.color.b = 1.0, 0.0, 0.0
     elif "navigation" in name:
