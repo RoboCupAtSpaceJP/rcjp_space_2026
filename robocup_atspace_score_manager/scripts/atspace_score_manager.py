@@ -12,6 +12,7 @@ from smach_files.capture_detector import CaptureDetector
 from std_srvs.srv import Trigger, TriggerResponse
 from utils.score_writer import write_scores
 from utils.gz_collision_detector import CollisionMonitor
+from std_msgs.msg import Float64
 import os
 import rospkg
 
@@ -22,14 +23,19 @@ class TimerState(smach.State):
     def __init__(self, duration):
         smach.State.__init__(self, outcomes=['timeout'])
         self.duration = duration
+        self.remaining_pub = rospy.Publisher('/competition/remaining_time', Float64, queue_size=1)
 
     def execute(self, userdata):
         start_time = time.time()
         while (time.time() - start_time) < self.duration:
             if self.preempt_requested():
                 self.service_preempt()
+                self.remaining_pub.publish(Float64(0.0))
                 return 'timeout'
+            remaining = self.duration - (time.time() - start_time)
+            self.remaining_pub.publish(Float64(max(0.0, remaining)))
             time.sleep(0.1)
+        self.remaining_pub.publish(Float64(0.0))
         return 'timeout'
 
 class InitialState(smach.State):
@@ -80,16 +86,21 @@ class CompetitionStartState(smach.State):
 
         self.instruction_msg = f"{self.phrase}{self.fixed_object_name} and {self.portable_object_name}."
         self.start_requested = False
+        self.docking_area_monitor = None
 
     def handle_start_call(self, req):
         res = TriggerResponse()
-        if req:
+        if not req:
+            res.success = False
+            res.message = "Start request was false."
+            return res
+        if self.docking_area_monitor is not None and self.docking_area_monitor.is_inside_dock() is True:
             self.start_requested = True
             res.success = True
             res.message = self.instruction_msg
         else:
             res.success = False
-            res.message = "Start request was false."
+            res.message = "Robot is not in docking area."
         return res
 
     def wait_for_result(self, timeout=5.0):
@@ -103,6 +114,7 @@ class CompetitionStartState(smach.State):
     def execute(self, userdata):
         rospy.loginfo('=== Competition Start State ===')
         self.start_requested = False
+        self.docking_area_monitor = AreaMonitor(area_name="docking_area")
         srv = rospy.Service('/competition_start', Trigger, self.handle_start_call)
         try:
             # /competition_start 待ち（タイマー外なので preempt 対応不要）
@@ -130,17 +142,29 @@ class DepartureTaskState(smach.State):
         rospy.loginfo('=== Departure Task State ===')
         try:
             docking_area_monitor = AreaMonitor(area_name="docking_area")
+
+            # エリア内確認: is_inside_dock() is True になるまで待つ
+            entry_confirmed = False
+            while not entry_confirmed and not rospy.is_shutdown():
+                if self.preempt_requested():
+                    rospy.loginfo('[DEBUG] Preempt detected in departure task (entry check)')
+                    userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
+                    return 'success'
+                if docking_area_monitor.is_inside_dock() is True:
+                    entry_confirmed = True
+                else:
+                    time.sleep(0.1)
+
+            # エリア離脱監視
             while not rospy.is_shutdown():
                 if self.preempt_requested():
-                    self.service_preempt()
                     rospy.loginfo('[DEBUG] Preempt detected in departure task')
                     userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                     return 'success'
-                if docking_area_monitor.wait_until_departed(timeout=5.0):
+                if docking_area_monitor.wait_until_departed(timeout=5.0, preempt_fn=self.preempt_requested):
                     break
 
             if self.preempt_requested():
-                self.service_preempt()
                 rospy.loginfo('[DEBUG] Preempt detected in departure task (post-break)')
                 userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                 return 'success'
@@ -172,27 +196,45 @@ class NavigationTaskState(smach.State):
         rospy.loginfo('=== Navigation Task State ===')
         try:
             if not userdata.searched:
-                # 往路：search_area への到達を待つ
-                self.collision_monitor.start_monitoring()
+                # 往路：navigation_area 到達 → 衝突監視開始 → search_area 到達 → 監視終了
                 try:
+                    nav_area_monitor = AreaMonitor(area_name="navigation_area")
                     search_area_monitor = AreaMonitor(area_name="search_area")
+
+                    # navigation_area 到達を待つ（衝突監視なし）
+                    while not rospy.is_shutdown():
+                        if self.preempt_requested():
+                            rospy.loginfo('[DEBUG] Preempt detected in forward navigation (before nav_area)')
+                            userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
+                            return 'dockingtask'
+                        if nav_area_monitor.wait_until_reached(timeout=5.0, preempt_fn=self.preempt_requested):
+                            break
+
+                    if self.preempt_requested():
+                        rospy.loginfo('[DEBUG] Preempt detected in forward navigation (nav_area reached)')
+                        userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
+                        return 'dockingtask'
+
+                    # navigation_area 内のみ衝突監視
+                    self.collision_monitor.start_monitoring()
+
+                    # search_area 到達を待つ
                     while not rospy.is_shutdown():
                         if self.preempt_requested():
                             rospy.loginfo('[DEBUG] Preempt detected in forward navigation')
                             safe_targets = self.collision_monitor.stop_monitoring()
                             userdata.scores_dict['obstacle_avoidance_outbound'] = self._calc_avoidance_score(safe_targets)
                             userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
-                            return 'searchtask'
-                        if search_area_monitor.wait_until_reached(timeout=5.0):
+                            return 'dockingtask'
+                        if search_area_monitor.wait_until_reached(timeout=5.0, preempt_fn=self.preempt_requested):
                             break
 
                     if self.preempt_requested():
-                        self.service_preempt()
                         rospy.loginfo('[DEBUG] Preempt detected in forward navigation (post-break)')
                         safe_targets = self.collision_monitor.stop_monitoring()
                         userdata.scores_dict['obstacle_avoidance_outbound'] = self._calc_avoidance_score(safe_targets)
                         userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
-                        return 'searchtask'
+                        return 'dockingtask'
 
                     safe_targets = self.collision_monitor.stop_monitoring()
                     userdata.scores_dict['obstacle_avoidance_outbound'] = self._calc_avoidance_score(safe_targets)
@@ -203,59 +245,60 @@ class NavigationTaskState(smach.State):
                     self.collision_monitor.stop_monitoring()
                     raise
             else:
-                # 復路：search_area 離脱 → navigation_area 到達 → navigation_area 離脱で加点
+                # 復路：search_area 離脱 → navigation_area 到達（衝突監視開始）→ navigation_area 離脱（監視終了）で加点
                 # search_area 再侵入時はステップ1に戻る
-                self.collision_monitor.start_monitoring()
+                monitoring_active = False
                 try:
                     search_area_monitor = AreaMonitor(area_name="search_area")
                     nav_area_monitor = AreaMonitor(area_name="navigation_area")
 
                     while not rospy.is_shutdown():
-                        # ステップ1: search_area 離脱を待つ
+                        # ステップ1: search_area 離脱を待つ（衝突監視なし）
                         while not rospy.is_shutdown():
                             if self.preempt_requested():
-                                self.service_preempt()
                                 rospy.loginfo('[DEBUG] Preempt detected in return navigation (search departure)')
-                                safe_targets = self.collision_monitor.stop_monitoring()
-                                userdata.scores_dict['obstacle_avoidance_return'] = self._calc_avoidance_score(safe_targets)
                                 userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                                 return 'dockingtask'
-                            if search_area_monitor.wait_until_departed(timeout=5.0):
+                            if search_area_monitor.wait_until_departed(timeout=5.0, preempt_fn=self.preempt_requested):
                                 break
 
-                        # ステップ2: navigation_area 到達を待つ（search_area 再侵入チェック付き）
+                        # ステップ2: navigation_area 到達を待つ（search_area 再侵入チェック付き、衝突監視なし）
                         nav_reached = False
                         while not rospy.is_shutdown():
                             if self.preempt_requested():
-                                self.service_preempt()
                                 rospy.loginfo('[DEBUG] Preempt detected in return navigation (nav reach)')
-                                safe_targets = self.collision_monitor.stop_monitoring()
-                                userdata.scores_dict['obstacle_avoidance_return'] = self._calc_avoidance_score(safe_targets)
                                 userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                                 return 'dockingtask'
                             if search_area_monitor.is_inside_dock() is True:
                                 rospy.loginfo('[DEBUG] Re-entered search_area, resetting to step 1')
                                 break
-                            if nav_area_monitor.wait_until_reached(timeout=5.0):
+                            if nav_area_monitor.wait_until_reached(timeout=5.0, preempt_fn=self.preempt_requested):
                                 nav_reached = True
                                 break
                         if not nav_reached:
                             continue  # search_area 再侵入 → ステップ1に戻る
 
-                        # ステップ3: navigation_area 離脱を待つ（search_area 再侵入チェック付き）
+                        # navigation_area 到達 → 衝突監視開始
+                        self.collision_monitor.start_monitoring()
+                        monitoring_active = True
+
+                        # ステップ3: navigation_area 離脱を待つ（search_area 再侵入チェック付き、衝突監視あり）
                         nav_departed = False
                         while not rospy.is_shutdown():
                             if self.preempt_requested():
-                                self.service_preempt()
+                                # 注意: service_preempt() を呼ぶと smach の SM レベルのプリエンプトも解除され、後続ステートに伝搬しなくなるため呼ばないこと
                                 rospy.loginfo('[DEBUG] Preempt detected in return navigation (nav departure)')
                                 safe_targets = self.collision_monitor.stop_monitoring()
+                                monitoring_active = False
                                 userdata.scores_dict['obstacle_avoidance_return'] = self._calc_avoidance_score(safe_targets)
                                 userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                                 return 'dockingtask'
                             if search_area_monitor.is_inside_dock() is True:
                                 rospy.loginfo('[DEBUG] Re-entered search_area, resetting to step 1')
+                                self.collision_monitor.stop_monitoring()
+                                monitoring_active = False
                                 break
-                            if nav_area_monitor.wait_until_departed(timeout=5.0):
+                            if nav_area_monitor.wait_until_departed(timeout=5.0, preempt_fn=self.preempt_requested):
                                 nav_departed = True
                                 break
                         if not nav_departed:
@@ -265,12 +308,14 @@ class NavigationTaskState(smach.State):
                         break
 
                     safe_targets = self.collision_monitor.stop_monitoring()
+                    monitoring_active = False
                     userdata.scores_dict['obstacle_avoidance_return'] = self._calc_avoidance_score(safe_targets)
                     userdata.scores_dict['navigation_return'] += rospy.get_param('/rules/scoring/navigation_task/reach_goal')
                     userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                     return 'dockingtask'
                 except Exception:
-                    self.collision_monitor.stop_monitoring()
+                    if monitoring_active:
+                        self.collision_monitor.stop_monitoring()
                     raise
         except Exception as e:
             rospy.logerr('Navigation task error: %s', str(e))
@@ -287,6 +332,11 @@ class SearchTaskState(smach.State):
             rospy.loginfo('=== Search Task State ===')
             self.fixed_captured = False
             self.portable_captured = False
+            if self.preempt_requested():
+                rospy.loginfo('[DEBUG] Preempt detected in search task (early check)')
+                userdata.searched = True
+                userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
+                return 'success'
             try:
                 fixed_object_name = rospy.get_param('/competition/fixed_object_name')
                 portable_object_name = rospy.get_param('/competition/portable_object_name')
@@ -321,9 +371,11 @@ class SearchTaskState(smach.State):
                         userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                         return 'success'
 
-                    result_name, result_status = detector.wait_for_result(timeout=5.0)
+                    result_name, result_status = detector.wait_for_result(timeout=5.0, preempt_fn=self.preempt_requested)
 
-                    if result_status == "capture_succeed":
+                    if result_status in (None, "preempted"):
+                        continue
+                    elif result_status == "capture_succeed":
                         if result_name == fixed_object_name and not self.fixed_captured:
                             rospy.loginfo(f'Fixed object [{fixed_object_name}] capture succeeded!')
                             userdata.scores_dict['search_task'] += rospy.get_param('/rules/scoring/search_task/fixed_object_capture')
@@ -334,7 +386,7 @@ class SearchTaskState(smach.State):
                             userdata.scores_dict['search_task'] += rospy.get_param('/rules/scoring/search_task/portable_object_capture')
                             self.portable_captured = True
                             userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
-                    elif result_status != "timeout":
+                    elif result_status == "capture_failed":
                         rospy.logwarn(f'Capture attempt for {result_name} failed: {result_status}')
 
                 userdata.searched = True
@@ -357,11 +409,10 @@ class DockingTaskState(smach.State):
             docking_area_monitor = AreaMonitor(area_name="docking_area")
             while not rospy.is_shutdown():
                 if self.preempt_requested():
-                    self.service_preempt()
                     rospy.loginfo('[DEBUG] Preempt detected in docking task')
                     userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                     return 'success'
-                if docking_area_monitor.wait_until_reached(timeout=5.0):
+                if docking_area_monitor.wait_until_reached(timeout=5.0, preempt_fn=self.preempt_requested):
                     break
 
             userdata.scores_dict['docking_task'] += rospy.get_param('/rules/scoring/docking_task/docking')

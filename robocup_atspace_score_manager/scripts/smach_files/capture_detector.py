@@ -74,11 +74,13 @@ class CaptureDetector:
         
         return res
 
-    def wait_for_result(self, timeout=5.0):
+    def wait_for_result(self, timeout=5.0, preempt_fn=None):
         self.result = None
         deadline = time.time() + timeout
         while not rospy.is_shutdown() and self.result is None:
             if time.time() >= deadline:
                 return self.last_captured_name, "timeout"
+            if preempt_fn and preempt_fn():
+                return self.last_captured_name, "preempted"
             time.sleep(0.1)
         return self.last_captured_name, self.result

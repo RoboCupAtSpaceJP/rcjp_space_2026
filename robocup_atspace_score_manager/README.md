@@ -4,7 +4,7 @@
 - 宇宙ステーション船内の自律的な点検・確認タスクの自動採点システムです。
 
 ### セットアップ方法
-- Int‑Ball2 シミュレータ Docker環境以外での動作確認はできていません。理論上は動作します。
+- Int‑Ball2 シミュレータ Docker環境内で動作します。既に採点プログラムが入っている場合は以下をする必要はありません。
 1. ROSの`src`フォルダに移動します．
     ```sh
     $ cd /home/nvidia/IB2/Int-Ball2_platform_simulator/src
@@ -12,7 +12,7 @@
 
 2. 本パッケージをcloneします．
     ```sh
-    $ git clone https://github.com/RoboCupAtSpaceJP/rcjp_space_2026.git -b feat/score_manager
+    $ git clone https://github.com/RoboCupAtSpaceJP/rcjp_space_2026.git
     ```
 
 3. パッケージをコンパイルします．
@@ -59,14 +59,19 @@ roslaunch robocup_atspace_score_manager atspace_score_manager.launch
   - スコアマネージャーを起動後、宇宙飛行士や可搬対象物が出現します。
 
 - スタートタスク
-  - 最初にスコアマネージャーが撮影対象(例: Go to the inspection area, take pictures of 〇〇 (固定対象物) and 〇〇 (可搬対
-象物), and return.)を提示し、競技者からのサービスコールを待機します。
+  - ロボットがドッキングエリア内にいる状態で、スコアマネージャーにサービスコールを送信します。
+  - スコアマネージャはコール受信後、撮影対象(例: Go to the inspection area, take pictures of 〇〇 (固定対象物) and 〇〇 (可搬対
+象物), and return.)を提示します。
   - サービス名：`/competition_start`、　型：`std_srvs/Trigger`、　スコアマネージャーはレスポンスの`message`欄に撮影対象を含んだ文章を提示。
     - 例
         ```sh
         rosservice call /competition_start "{}"
         ```
   - スコアマネージャーはサービスコールを受信したら、時間の計測を開始します。タスクを完遂、または[competition.yaml](config/competition.yaml)の`time_limit`で定義した時間制限をすぎるとスコアマネジャーは終了します。
+    - 競技の残り時間はトピックで配信されます。トピック名：competition/remaining_time, 型：std_msgs/Float64
+        ```sh
+        rostopic echo competition/remaining_time
+        ```
   - その後、ロボットがドッキングエリアを自律的に離脱すると`scores.yaml`に得点が加点されます。
 - ナビゲーションタスク(往路)
   - ロボットはナビゲーションエリアを通過し、点検エリアへ到達すると得点が加点されます。
