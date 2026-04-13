@@ -228,6 +228,14 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
+      Marker Topic: /spawned_object_markers
+      Name: SpawnedObjects
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
       Marker Topic: /ib2_route_display/history
       Name: Marker
       Namespaces:

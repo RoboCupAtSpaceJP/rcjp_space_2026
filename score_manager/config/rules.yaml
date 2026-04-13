@@ -1,0 +1,93 @@
+rules:
+  instruction_phrase: "Go to the inspection area, take pictures of "
+
+  areas:
+    name: ["docking_area", "navigation_area", "search_area"]
+    docking_area:
+      x_range: [10.8, 11.0]
+      y_range: [-3.64, -3.14]
+      z_range: [4.0, 4.3]
+    navigation_area:
+      x_range: [10.0, 12.0]
+      y_range: [-8.0, -5.0]
+      z_range: [4.0, 6.0]
+    search_area:
+      x_range: [10.0, 12.0]
+      y_range: [-11.5, -8.0]
+      z_range: [4.0, 6.0]
+
+  safety_distance: 0.3
+
+  search_points:
+    fixed:
+      name: ["atu", "airlock", "window"]
+      atu:
+        position: [11.922381401062012, -6.9545207023620605, 4.279989242553711]
+        rotation: [0.0, 0.0, 3.14]
+      airlock:
+        position: [10.925918579101562, -10.028264999389648, 5.313942909240723]
+        rotation: [0.0, 0.0, 1.57]
+      window:
+        position: [11.7, -11.364152908325195, 4.573802947998047]
+        rotation: [0.0, 0.0, 1.57]
+    portable_objects:
+      name: ["laptop", "tape", "camera"]
+      laptop:
+        position: [11.0, -9.0, 4.8]
+        rotation: [0.0, 0.0, 0.0]
+        model_folder: "Travel_Mate_P_series_Notebook/meshes/model.obj"
+      tape:
+        position: [11.0, -9.0, 4.8]
+        rotation: [0.0, 0.0, 0.0]
+        model_folder: "Shurtape_Gaffers_Tape_Silver_2_x_60_yd/meshes/model.obj"
+      camera:
+        position: [11.5, -8.5, 4.5]
+        rotation: [0.0, 1.57, 0.0]
+        model_folder: "96-camara-analogica_byquuimey/meshes/model.obj"
+    
+    human_templates:      # 見た目のカタログ（新しいモデルを追加した場合はここを増やす）
+      name: ["person_a", "person_b", "person_c", "person_d", "person_e", "person_f", "person_g"]
+      person_a:
+        model_folder: "float_blue.dae"
+      person_b:
+        model_folder: "float_orange.dae"
+      person_c:
+        model_folder: "float_purple.dae"
+      person_d:
+        model_folder: "float2_blue.dae"
+      person_e:
+        model_folder: "float2_green.dae"
+      person_f:
+        model_folder: "float2_orange.dae"
+      person_g:
+        model_folder: "float2_purple.dae"
+
+    # 固定された場所の定義（コリジョン判定はこの名前 human_pos_1/2 で行う）
+    human_obstacles:
+      publish_tf: true
+      name: ["human_pos_1", "human_pos_2"]
+      human_pos_1:
+        position: [11.2, -6.0, 5.0]
+        rotation: [0.0, 0.0, 1.57]
+      human_pos_2:
+        position: [11.2, -7.0, 5.0]
+        rotation: [0.0, 0.0, 1.57]
+
+  capture_conditions:
+    distance_threshold: 1.0
+    dot_product_threshold: 0.866
+
+  scoring:
+    start_task:
+      departure: 10
+    navigation_task:
+      reach_goal: 20
+      avoid_obstacle: 10
+      safety_bonus: 20
+    search_task:
+      fixed_object_capture: 20
+      portable_object_capture: 20
+    docking_task:
+      docking: 20
+    time_bonus:
+      max_bonus: 10

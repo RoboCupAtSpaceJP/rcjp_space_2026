@@ -1,0 +1,51 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='__MODEL_NAME__'>
+    <link name='link'>
+      <gravity>0</gravity>
+      
+      <visual name='visual'>
+        <geometry>
+          <mesh>
+            <uri>__MESH_URI__</uri>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <collision name='__COLLISION_NAME__'>
+        <geometry>
+          <mesh>
+            <uri>__MESH_URI__</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <contact>
+            <collide_bitmask>0xffff</collide_bitmask>
+          </contact>
+        </surface>
+      </collision>
+
+      <sensor name='human_contact_sensor' type='contact'>
+        <update_rate>10.0</update_rate>
+        <always_on>true</always_on>
+        <contact>
+          <collision>__TARGET_ID__</collision>
+        </contact>
+        <plugin name='ros_gazebo_contact_plugin' filename='libgazebo_ros_bumper.so'>
+          <alwaysOn>true</alwaysOn>
+          <updateRate>10.0</updateRate>
+          <bumperTopicName>__TOPIC_NAME__</bumperTopicName>
+          <frameName>link</frameName>
+        </plugin>
+      </sensor>
+
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>0.1</ixx><iyy>0.1</iyy><izz>0.1</izz>
+          <ixy>0</ixy><ixz>0</ixz><iyz>0</iyz>
+        </inertia>
+      </inertial>
+    </link>
+  </model>
+</sdf>
