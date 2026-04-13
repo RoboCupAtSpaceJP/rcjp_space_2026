@@ -70,7 +70,7 @@ rules:
         position: [11.2, -6.0, 5.0]
         rotation: [0.0, 0.0, 1.57]
       human_pos_2:
-        position: [11.2, -7.0, 5.0]
+        position: [11.0, -7.0, 5.0]
         rotation: [0.0, 0.0, 1.57]
 
   capture_conditions:

@@ -38,7 +38,7 @@ class AreaMonitor:
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             return None
         
-    def wait_until_departed(self, timeout=5.0):
+    def wait_until_departed(self, timeout=5.0, preempt_fn=None):
         rospy.loginfo("Waiting for departure from %s...", self.area_name)
         deadline = time.time() + timeout
         while not rospy.is_shutdown():
@@ -48,10 +48,12 @@ class AreaMonitor:
                 return True
             if time.time() >= deadline:
                 return False
+            if preempt_fn and preempt_fn():
+                return False
             time.sleep(0.1)
         return False
 
-    def wait_until_reached(self, timeout=5.0):
+    def wait_until_reached(self, timeout=5.0, preempt_fn=None):
         rospy.loginfo("Waiting for reach to %s...", self.area_name)
         deadline = time.time() + timeout
         while not rospy.is_shutdown():
@@ -60,6 +62,8 @@ class AreaMonitor:
                 rospy.loginfo("Reach confirmed.")
                 return True
             if time.time() >= deadline:
+                return False
+            if preempt_fn and preempt_fn():
                 return False
             time.sleep(0.1)
         return False
