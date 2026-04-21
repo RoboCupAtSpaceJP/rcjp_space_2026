@@ -2,8 +2,11 @@ competition:
   team_name: "teamA"                    # スコアログ・結果出力に記録されるチーム名
   trial_number: 1                       # スコアログ・結果出力に記録される試技番号（1から始まる整数）
   stage: 2                              # スコアログ・結果出力に記録されるステージ番号
-  fixed_object_name: "airlock"          # 探索タスクで撮影対象となる固定物体の名前 
-  portable_object_name: "laptop"        # 探索タスクで撮影対象となる移動物体の名前
+  fixed_object_name: "airlock"          # 表示名（命令文・/report_capture 用）
+  portable_object_name: "laptop"        # 表示名（命令文・/report_capture 用）
+  portable_object_tf: "obstacle_1"      # TFフレーム名（物体種別を明かさない不透明な名前）
+  human_pos_1_tf: "obstacle_2"          # human_pos_1 のTFフレーム名
+  human_pos_2_tf: "obstacle_3"          # human_pos_2 のTFフレーム名
   dummy_objects: ["tape", "ctb_1023"]   # スポーンされるがスコア対象外のダミー物体（最大2個まで）
   human_assignments:                    # 人間障害物の配置設定（最大2人）
     human_pos_1: "person_d"             # 1人目の見た目。出現させたくない場所は "" or "null"

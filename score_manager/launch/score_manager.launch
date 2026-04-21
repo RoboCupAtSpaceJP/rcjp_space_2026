@@ -35,4 +35,6 @@
     <node name="search_point_tf_publisher" pkg="score_manager" type="search_point.py" output="screen"/>
     
     <node name="score_manager_node" pkg="score_manager" type="atspace_score_manager.py" output="screen"/>
+
+    <node name="score_display" pkg="score_manager" type="score_display.py" output="screen"/>
 </launch>

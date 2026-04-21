@@ -22,6 +22,12 @@ RUN rm -rf /home/nvidia/IB2/Int-Ball2_platform_simulator/src/platform_sim/simula
     cp -r  /home/nvidia/IB2/Int-Ball2_platform_simulator/src/rcjp_space_2026/sim/sim.yaml \
            /home/nvidia/IB2/Int-Ball2_platform_simulator/src/platform_sim/simulation/ib2_gazebo/sim/
 
+# GSEの設定ファイルを移動
+
+RUN rm -rf /home/nvidia/IB2/Int-Ball2_platform_gse/src/ground_system/platform_gui/config/container_image_list.json && \
+    cp -r  /home/nvidia/IB2/Int-Ball2_platform_simulator/src/rcjp_space_2026/config/container_image_list.json \
+           /home/nvidia/IB2/Int-Ball2_platform_gse/src/ground_system/platform_gui/config/
+
 # ビルド
 RUN cd /home/nvidia/IB2/Int-Ball2_platform_simulator && \
     /bin/bash -c "source /opt/ros/noetic/setup.bash && catkin_make"

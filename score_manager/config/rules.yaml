@@ -94,6 +94,10 @@ rules:
     distance_threshold: 1.0
     dot_product_threshold: 0.866
 
+  # 安全距離ボーナスの条件
+  safety_conditions:
+    distance_threshold: 0.4
+
   # スコアシートの定義
   scoring:
     start_task:

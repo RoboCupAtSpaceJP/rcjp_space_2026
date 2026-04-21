@@ -21,7 +21,12 @@ class CaptureDetector:
 
         self.robot_frame = "body"
         self.iss_frame = "iss_body"
-        
+
+        # 表示名 → TFフレーム名 のマッピング（可搬対象物のみ; 固定物体はそのまま）
+        portable_display = rospy.get_param('/competition/portable_object_name', '')
+        portable_tf = rospy.get_param('/competition/portable_object_tf', portable_display)
+        self.name_to_tf = {portable_display: portable_tf} if portable_display else {}
+
         self.result = None
         self.last_captured_name = ""
         self.srv = rospy.Service('/report_capture', CaptureReport, self.handle_capture_report)
@@ -39,13 +44,20 @@ class CaptureDetector:
             return res
 
         try:
+            if req.target_object_name not in self.target_names:
+                res.success = False
+                res.message = f"capture_failed: '{req.target_object_name}' is not a valid target"
+                rospy.logwarn(f"Capture rejected: '{req.target_object_name}' not in target list {self.target_names}")
+                return res
+
             r_t = self.tf_buffer.lookup_transform(self.iss_frame, self.robot_frame, rospy.Time(0), rospy.Duration(1.0))
             r_pos = np.array([r_t.transform.translation.x, r_t.transform.translation.y, r_t.transform.translation.z])
             forward = self.get_unit_vector(r_t)
 
             success_object = False
 
-            o_t = self.tf_buffer.lookup_transform(self.iss_frame, req.target_object_name, rospy.Time(0), rospy.Duration(1.0))
+            tf_name = self.name_to_tf.get(req.target_object_name, req.target_object_name)
+            o_t = self.tf_buffer.lookup_transform(self.iss_frame, tf_name, rospy.Time(0), rospy.Duration(1.0))
             o_pos = np.array([o_t.transform.translation.x, o_t.transform.translation.y, o_t.transform.translation.z])
             
             diff = o_pos - r_pos

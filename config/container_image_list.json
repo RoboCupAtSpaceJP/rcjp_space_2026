@@ -1,0 +1,10 @@
+{
+  "container_image_list": [
+    "ib2_user:0.1",
+    "ib2_team:01", 
+    "ib2_team:02", 
+    "ib2_team:03", 
+    "ib2_team:04",
+    "ib2_team:05"
+  ]
+}

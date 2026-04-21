@@ -5,7 +5,9 @@ import subprocess
 import re
 import threading
 import sys
+import math
 import rospy
+import tf
 
 class CollisionMonitor:
     def __init__(self, robot_prefix="ib2"):
@@ -89,6 +91,62 @@ class CollisionMonitor:
         safe_targets = [t for t in self.watch_targets if t not in self.collided_names]
         rospy.loginfo(f"[CollisionMonitor] Stopped. Collided: {list(self.collided_names)}")
         return safe_targets
+
+class SafetyDistanceMonitor:
+    """ナビゲーション中にIB2が人のTF中心から一定距離以内に入ったか監視する"""
+
+    def __init__(self, robot_frame="body", ref_frame="iss_body"):
+        self.robot_frame = robot_frame
+        self.ref_frame = ref_frame
+        self.safety_threshold = rospy.get_param('/rules/safety_conditions/distance_threshold', 0.4)
+
+        self.human_frames = []
+        h1 = rospy.get_param('/competition/human_assignments/human_pos_1', "")
+        h2 = rospy.get_param('/competition/human_assignments/human_pos_2', "")
+        if h1: self.human_frames.append(rospy.get_param('/competition/human_pos_1_tf', 'human_pos_1'))
+        if h2: self.human_frames.append(rospy.get_param('/competition/human_pos_2_tf', 'human_pos_2'))
+
+        self.too_close_set = set()
+        self._stop_event = threading.Event()
+        self._thread = None
+
+    def _monitor_loop(self):
+        listener = tf.TransformListener()
+        rate = rospy.Rate(10)
+        while not self._stop_event.is_set() and not rospy.is_shutdown():
+            try:
+                listener.waitForTransform(self.ref_frame, self.robot_frame, rospy.Time(0), rospy.Duration(0.5))
+                (robot_pos, _) = listener.lookupTransform(self.ref_frame, self.robot_frame, rospy.Time(0))
+                for human_frame in self.human_frames:
+                    if human_frame in self.too_close_set:
+                        continue
+                    try:
+                        (human_pos, _) = listener.lookupTransform(self.ref_frame, human_frame, rospy.Time(0))
+                        dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(robot_pos, human_pos)))
+                        if dist < self.safety_threshold:
+                            self.too_close_set.add(human_frame)
+                            rospy.logwarn(f"[SafetyDistanceMonitor] Too close to {human_frame}: {dist:.3f}m")
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            rate.sleep()
+
+    def start_monitoring(self):
+        self.too_close_set.clear()
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._monitor_loop)
+        self._thread.daemon = True
+        self._thread.start()
+        rospy.loginfo(f"[SafetyDistanceMonitor] Started. threshold={self.safety_threshold}m, watching: {self.human_frames}")
+
+    def stop_monitoring(self):
+        """監視終了。安全距離を保てた場合True、40cm以内に入った人がいればFalseを返す"""
+        self._stop_event.set()
+        kept_safe = len(self.too_close_set) == 0
+        rospy.loginfo(f"[SafetyDistanceMonitor] Stopped. Too close: {list(self.too_close_set)}, safe={kept_safe}")
+        return kept_safe
+
 
 # ==========================================
 # 単体テスト用メインルーチン

@@ -11,7 +11,7 @@ from smach_files.area_monitor import AreaMonitor
 from smach_files.capture_detector import CaptureDetector
 from std_srvs.srv import Trigger, TriggerResponse
 from utils.score_writer import write_scores
-from utils.gz_collision_detector import CollisionMonitor
+from utils.gz_collision_detector import CollisionMonitor, SafetyDistanceMonitor
 from std_msgs.msg import Float64
 import os
 import rospkg
@@ -26,13 +26,13 @@ class TimerState(smach.State):
         self.remaining_pub = rospy.Publisher('/competition/remaining_time', Float64, queue_size=1)
 
     def execute(self, userdata):
-        start_time = time.time()
-        while (time.time() - start_time) < self.duration:
+        start_time = rospy.Time.now().to_sec()
+        while (rospy.Time.now().to_sec() - start_time) < self.duration:
             if self.preempt_requested():
                 self.service_preempt()
                 self.remaining_pub.publish(Float64(0.0))
                 return 'timeout'
-            remaining = self.duration - (time.time() - start_time)
+            remaining = self.duration - (rospy.Time.now().to_sec() - start_time)
             self.remaining_pub.publish(Float64(max(0.0, remaining)))
             time.sleep(0.1)
         self.remaining_pub.publish(Float64(0.0))
@@ -47,14 +47,18 @@ class InitialState(smach.State):
         rospy.loginfo('=== Initial State ===')
         try:
             trial_number = rospy.get_param('/competition/trial_number')
+            stage = rospy.get_param('/competition/stage')
             team_name = rospy.get_param('/competition/team_name')
             userdata.scores_dict = {
+                            'stage': stage,
                             'trial_number': trial_number,
                             'start_task': 0,
                             'navigation_outbound': 0,
                             'navigation_return': 0,
                             'obstacle_avoidance_outbound': 0,
                             'obstacle_avoidance_return': 0,
+                            'safety_bonus_outbound': 0,
+                            'safety_bonus_return': 0,
                             'search_task': 0,
                             'docking_task': 0,
                             'time_bonus': 0,
@@ -121,7 +125,7 @@ class CompetitionStartState(smach.State):
             while not self.start_requested and not rospy.is_shutdown():
                 self.wait_for_result(timeout=5.0)
 
-            userdata.start_time = time.time()
+            userdata.start_time = rospy.Time.now().to_sec()
             userdata.scores_dict['timestamp'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             rospy.loginfo('Competition started. Timer will begin now.')
             srv.shutdown()
@@ -182,6 +186,7 @@ class NavigationTaskState(smach.State):
                             input_keys=['scores_dict', 'searched', 'log_file_path', 'trial_id'],
                             output_keys=['scores_dict', 'searched', 'trial_id'])
         self.collision_monitor = CollisionMonitor()
+        self.safety_monitor = SafetyDistanceMonitor()
 
     def _calc_avoidance_score(self, safe_targets):
         """safe_targets を受け取り、障害物回避の加点を計算して返す。
@@ -191,6 +196,17 @@ class NavigationTaskState(smach.State):
         human_safe = [t for t in safe_targets if t != "iss"]
         avoid_point = rospy.get_param('/rules/scoring/navigation_task/avoid_obstacle')
         return len(human_safe) * avoid_point
+
+    def _calc_safety_bonus(self, safe_targets, distance_kept):
+        """安全距離ボーナス: 壁未衝突 + 全人回避 + 40cm以内に入らなかった場合に加点"""
+        if "iss" not in safe_targets:
+            return 0
+        human_frames = [t for t in self.collision_monitor.watch_targets if t != "iss"]
+        if not all(h in safe_targets for h in human_frames):
+            return 0
+        if not distance_kept:
+            return 0
+        return rospy.get_param('/rules/scoring/navigation_task/safety_bonus', 20)
 
     def execute(self, userdata):
         rospy.loginfo('=== Navigation Task State ===')
@@ -215,15 +231,18 @@ class NavigationTaskState(smach.State):
                         userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                         return 'dockingtask'
 
-                    # navigation_area 内のみ衝突監視
+                    # navigation_area 内のみ衝突監視・安全距離監視
                     self.collision_monitor.start_monitoring()
+                    self.safety_monitor.start_monitoring()
 
                     # search_area 到達を待つ
                     while not rospy.is_shutdown():
                         if self.preempt_requested():
                             rospy.loginfo('[DEBUG] Preempt detected in forward navigation')
                             safe_targets = self.collision_monitor.stop_monitoring()
+                            distance_kept = self.safety_monitor.stop_monitoring()
                             userdata.scores_dict['obstacle_avoidance_outbound'] = self._calc_avoidance_score(safe_targets)
+                            userdata.scores_dict['safety_bonus_outbound'] = self._calc_safety_bonus(safe_targets, distance_kept)
                             userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                             return 'dockingtask'
                         if search_area_monitor.wait_until_reached(timeout=5.0, preempt_fn=self.preempt_requested):
@@ -232,17 +251,22 @@ class NavigationTaskState(smach.State):
                     if self.preempt_requested():
                         rospy.loginfo('[DEBUG] Preempt detected in forward navigation (post-break)')
                         safe_targets = self.collision_monitor.stop_monitoring()
+                        distance_kept = self.safety_monitor.stop_monitoring()
                         userdata.scores_dict['obstacle_avoidance_outbound'] = self._calc_avoidance_score(safe_targets)
+                        userdata.scores_dict['safety_bonus_outbound'] = self._calc_safety_bonus(safe_targets, distance_kept)
                         userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                         return 'dockingtask'
 
                     safe_targets = self.collision_monitor.stop_monitoring()
+                    distance_kept = self.safety_monitor.stop_monitoring()
                     userdata.scores_dict['obstacle_avoidance_outbound'] = self._calc_avoidance_score(safe_targets)
+                    userdata.scores_dict['safety_bonus_outbound'] = self._calc_safety_bonus(safe_targets, distance_kept)
                     userdata.scores_dict['navigation_outbound'] = rospy.get_param('/rules/scoring/navigation_task/reach_goal')
                     userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                     return 'searchtask'
                 except Exception:
                     self.collision_monitor.stop_monitoring()
+                    self.safety_monitor.stop_monitoring()
                     raise
             else:
                 # 復路：search_area 離脱 → navigation_area 到達（衝突監視開始）→ navigation_area 離脱（監視終了）で加点
@@ -278,8 +302,9 @@ class NavigationTaskState(smach.State):
                         if not nav_reached:
                             continue  # search_area 再侵入 → ステップ1に戻る
 
-                        # navigation_area 到達 → 衝突監視開始
+                        # navigation_area 到達 → 衝突監視・安全距離監視開始
                         self.collision_monitor.start_monitoring()
+                        self.safety_monitor.start_monitoring()
                         monitoring_active = True
 
                         # ステップ3: navigation_area 離脱を待つ（search_area 再侵入チェック付き、衝突監視あり）
@@ -289,13 +314,16 @@ class NavigationTaskState(smach.State):
                                 # 注意: service_preempt() を呼ぶと smach の SM レベルのプリエンプトも解除され、後続ステートに伝搬しなくなるため呼ばないこと
                                 rospy.loginfo('[DEBUG] Preempt detected in return navigation (nav departure)')
                                 safe_targets = self.collision_monitor.stop_monitoring()
+                                distance_kept = self.safety_monitor.stop_monitoring()
                                 monitoring_active = False
                                 userdata.scores_dict['obstacle_avoidance_return'] = self._calc_avoidance_score(safe_targets)
+                                userdata.scores_dict['safety_bonus_return'] = self._calc_safety_bonus(safe_targets, distance_kept)
                                 userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                                 return 'dockingtask'
                             if search_area_monitor.is_inside_dock() is True:
                                 rospy.loginfo('[DEBUG] Re-entered search_area, resetting to step 1')
                                 self.collision_monitor.stop_monitoring()
+                                self.safety_monitor.stop_monitoring()
                                 monitoring_active = False
                                 break
                             if nav_area_monitor.wait_until_departed(timeout=5.0, preempt_fn=self.preempt_requested):
@@ -308,14 +336,17 @@ class NavigationTaskState(smach.State):
                         break
 
                     safe_targets = self.collision_monitor.stop_monitoring()
+                    distance_kept = self.safety_monitor.stop_monitoring()
                     monitoring_active = False
                     userdata.scores_dict['obstacle_avoidance_return'] = self._calc_avoidance_score(safe_targets)
+                    userdata.scores_dict['safety_bonus_return'] = self._calc_safety_bonus(safe_targets, distance_kept)
                     userdata.scores_dict['navigation_return'] += rospy.get_param('/rules/scoring/navigation_task/reach_goal')
                     userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                     return 'dockingtask'
                 except Exception:
                     if monitoring_active:
                         self.collision_monitor.stop_monitoring()
+                        self.safety_monitor.stop_monitoring()
                     raise
         except Exception as e:
             rospy.logerr('Navigation task error: %s', str(e))
@@ -430,11 +461,17 @@ class FinishState(smach.State):
         rospy.loginfo('=== Finish State ===')
         try:
             if userdata.start_time is not None:
-                elapsed_sec = int(time.time() - userdata.start_time)
-                h = elapsed_sec // 3600
-                m = (elapsed_sec % 3600) // 60
-                s = elapsed_sec % 60
+                elapsed_sec = rospy.Time.now().to_sec() - userdata.start_time
+                h = int(elapsed_sec) // 3600
+                m = (int(elapsed_sec) % 3600) // 60
+                s = int(elapsed_sec) % 60
                 userdata.scores_dict['elapsed_time'] = f"{h:02d}:{m:02d}:{s:02d}"
+
+                time_limit = rospy.get_param('/competition/time_limit', 900.0)
+                max_bonus = rospy.get_param('/rules/scoring/time_bonus/max_bonus', 10)
+                remaining = time_limit - elapsed_sec
+                if remaining > 0:
+                    userdata.scores_dict['time_bonus'] = int(remaining / time_limit * max_bonus)
             write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
             return 'success'
         except Exception as e:

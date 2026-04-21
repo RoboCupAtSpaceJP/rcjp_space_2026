@@ -25,6 +25,7 @@ class SDFSpawner:
         self.iss_model_name = 'iss'
         self.spawned = False
         self.publish_tf_enabled = True
+        self.tf_frame = self.obs_name  # TFフレーム名（デフォルトはモデル名と同じ）
         self.latest_obj_pose = None
         self.latest_iss_pose = None
         self.br = tf.TransformBroadcaster()
@@ -75,6 +76,15 @@ class SDFSpawner:
             self.obs_name = dummy_list[idx]
             rospy.loginfo(f"[{rospy.get_name()}] Dummy object selected: {self.obs_name}")
         
+        # --- 4b. TFフレーム名の解決（可搬対象物・人間は不透明な名前を使用）---
+        if self.category == "portable_objects":
+            portable_name = rospy.get_param("/competition/portable_object_name", "")
+            if self.obs_name == portable_name:
+                self.tf_frame = rospy.get_param("/competition/portable_object_tf", self.obs_name)
+        elif self.category == "human_obstacles":
+            tf_param = f"/competition/{self.obs_name}_tf"
+            self.tf_frame = rospy.get_param(tf_param, self.obs_name)
+
         # --- 5. 割り当てチェックロジック (Human Obstacles用) ---
         if self.category == "human_obstacles":
             if not assigned_mesh_key:
@@ -155,9 +165,9 @@ class SDFSpawner:
 
     def publish_mesh_marker(self):
         marker = Marker()
-        marker.header.frame_id = self.obs_name
+        marker.header.frame_id = self.tf_frame
         marker.header.stamp = rospy.Time.now()
-        marker.ns = self.obs_name
+        marker.ns = self.tf_frame
         marker.id = 0
         marker.type = Marker.MESH_RESOURCE
         marker.action = Marker.ADD
@@ -203,7 +213,7 @@ class SDFSpawner:
         # 物体フレームのX軸周りに180°回転し、iss_bodyのZ下向き正に合わせる
         correction = tft.quaternion_from_euler(np.pi, 0, 0)
         rel_ori = tft.quaternion_multiply(rel_ori, correction)
-        self.br.sendTransform(rel_pos, rel_ori, rospy.Time.now(), self.obs_name, self.target_frame)
+        self.br.sendTransform(rel_pos, rel_ori, rospy.Time.now(), self.tf_frame, self.target_frame)
         # TFが確立した最初のタイミングでRvizマーカーを発行
         if not self.marker_published and self.mesh_abs_path:
             self.publish_mesh_marker()

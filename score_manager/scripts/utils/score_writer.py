@@ -11,13 +11,16 @@ def _build_entry(sd, trial_id, total):
     """スコアエントリの辞書を構築する。"""
     return {
         'timestamp': trial_id,
+        'stage': sd.get('stage', 1),
         'trial_number': sd['trial_number'],
         'start_task': sd['start_task'],
         'navigation_outbound': sd['navigation_outbound'],
-        'navigation_return': sd['navigation_return'],
         'obstacle_avoidance_outbound': sd['obstacle_avoidance_outbound'],
-        'obstacle_avoidance_return': sd['obstacle_avoidance_return'],
+        'safety_bonus_outbound': sd.get('safety_bonus_outbound', 0),
         'search_task': sd['search_task'],
+        'navigation_return': sd['navigation_return'],
+        'obstacle_avoidance_return': sd['obstacle_avoidance_return'],
+        'safety_bonus_return': sd.get('safety_bonus_return', 0),
         'docking_task': sd['docking_task'],
         'time_bonus': sd['time_bonus'],
         'elapsed_time': sd.get('elapsed_time', '00:00:00'),
@@ -35,6 +38,7 @@ def write_scores(scores_dict, log_file_path, trial_id=None):
         sd = scores_dict
         total = sum([sd['start_task'], sd['navigation_outbound'], sd['navigation_return'],
                      sd['obstacle_avoidance_outbound'], sd['obstacle_avoidance_return'],
+                     sd.get('safety_bonus_outbound', 0), sd.get('safety_bonus_return', 0),
                      sd['search_task'], sd['docking_task'], sd['time_bonus']])
 
         # 既存データのロード
