@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 作業ディレクトリ
 WORKDIR /home/nvidia
 
+# ホストのワークスペースパスを受け取りlaunchファイルを置換
+ARG HOST_USER_PATH
+RUN sed -i 's#<arg name="host_ib2_workspace" default="[^"]*"#<arg name="host_ib2_workspace" default="'"$HOST_USER_PATH"'/shared_data_sim"#' /home/nvidia/IB2/Int-Ball2_platform_simulator/src/platform_sim/platform_sim_tools/launch/platform_manager_bringup.launch
+
 # リポジトリ取得
 RUN cd /home/nvidia/IB2/Int-Ball2_platform_simulator/src && \
     git clone https://github.com/RoboCupAtSpaceJP/rcjp_space_2026.git 

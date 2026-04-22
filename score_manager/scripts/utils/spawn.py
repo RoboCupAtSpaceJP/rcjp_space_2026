@@ -157,9 +157,12 @@ class SDFSpawner:
         self._setup_monitoring_only()
 
     def _setup_monitoring_only(self):
+        self._should_publish_tf = (
+            self.category in ["portable_objects", "portable"] or
+            (self.category == "human_obstacles" and self.spawned and self.publish_tf_enabled)
+        )
+        self._last_tf_stamp = rospy.Time(0)
         rospy.Subscriber('/gazebo/model_states', ModelStates, self.gazebo_callback)
-        if self.category in ["portable_objects", "portable"] or (self.category == "human_obstacles" and self.spawned and self.publish_tf_enabled):
-            rospy.Timer(rospy.Duration(0.1), self.publish_tf)
         rospy.on_shutdown(self.cleanup)
         rospy.loginfo(f"Node Initialized: {self.obs_name} (Spawned: {self.spawned})")
 
@@ -185,36 +188,41 @@ class SDFSpawner:
         self.marker_pub.publish(marker)
 
     def gazebo_callback(self, msg):
-        # 名前リストの中から正確に自分の名前を探す
         try:
             idx = msg.name.index(self.obs_name)
             self.latest_obj_pose = msg.pose[idx]
         except ValueError:
-            # 自分の名前がリストにない場合は何もしない
             pass
 
         if self.iss_model_name in msg.name:
             self.latest_iss_pose = msg.pose[msg.name.index(self.iss_model_name)]
 
-    def publish_tf(self, event):
+        if self._should_publish_tf:
+            self._publish_tf_now()
+
+    def _publish_tf_now(self):
         if self.latest_obj_pose is None or self.latest_iss_pose is None:
             return
-        q_iss = [self.latest_iss_pose.orientation.x, self.latest_iss_pose.orientation.y, 
+        stamp = rospy.Time.now()
+        if stamp == self._last_tf_stamp:
+            return
+        self._last_tf_stamp = stamp
+
+        q_iss = [self.latest_iss_pose.orientation.x, self.latest_iss_pose.orientation.y,
                  self.latest_iss_pose.orientation.z, self.latest_iss_pose.orientation.w]
         t_iss = [self.latest_iss_pose.position.x, self.latest_iss_pose.position.y, self.latest_iss_pose.position.z]
         m_iss = tft.concatenate_matrices(tft.translation_matrix(t_iss), tft.quaternion_matrix(q_iss))
-        q_obj = [self.latest_obj_pose.orientation.x, self.latest_obj_pose.orientation.y, 
+        q_obj = [self.latest_obj_pose.orientation.x, self.latest_obj_pose.orientation.y,
                  self.latest_obj_pose.orientation.z, self.latest_obj_pose.orientation.w]
         t_obj = [self.latest_obj_pose.position.x, self.latest_obj_pose.position.y, self.latest_obj_pose.position.z]
         m_obj = tft.concatenate_matrices(tft.translation_matrix(t_obj), tft.quaternion_matrix(q_obj))
         m_rel = np.dot(tft.inverse_matrix(m_iss), m_obj)
         rel_pos = tft.translation_from_matrix(m_rel)
         rel_ori = tft.quaternion_from_matrix(m_rel)
-        # 物体フレームのX軸周りに180°回転し、iss_bodyのZ下向き正に合わせる
+        # iss_bodyのZ下向き正に合わせるためX軸周りに180°回転
         correction = tft.quaternion_from_euler(np.pi, 0, 0)
         rel_ori = tft.quaternion_multiply(rel_ori, correction)
-        self.br.sendTransform(rel_pos, rel_ori, rospy.Time.now(), self.tf_frame, self.target_frame)
-        # TFが確立した最初のタイミングでRvizマーカーを発行
+        self.br.sendTransform(rel_pos, rel_ori, stamp, self.tf_frame, self.target_frame)
         if not self.marker_published and self.mesh_abs_path:
             self.publish_mesh_marker()
             self.marker_published = True
