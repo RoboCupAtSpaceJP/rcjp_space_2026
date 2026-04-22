@@ -386,7 +386,11 @@ class SearchTaskState(smach.State):
                         entry_confirmed = True
                     else:
                         time.sleep(0.1)
+                
+                # 境界付近の瞬間的なFalse判定を避けるため安定待機
+                time.sleep(2.0)
 
+                consecutive_outside = 0
                 while not (self.fixed_captured and self.portable_captured) and not rospy.is_shutdown():
                     # preempt チェック
                     if self.preempt_requested():
@@ -395,12 +399,16 @@ class SearchTaskState(smach.State):
                         userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                         return 'success'
 
-                    # エリア離脱チェック
+                    # エリア離脱チェック（連続2回Falseで確定）
                     if search_area_monitor.is_inside_dock() is False:
-                        rospy.loginfo('Left search area, finishing search task with partial score')
-                        userdata.searched = True
-                        userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
-                        return 'success'
+                        consecutive_outside += 1
+                        if consecutive_outside >= 2:
+                            rospy.loginfo('Left search area, finishing search task with partial score')
+                            userdata.searched = True
+                            userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
+                            return 'success'
+                    else:
+                        consecutive_outside = 0
 
                     result_name, result_status = detector.wait_for_result(timeout=5.0, preempt_fn=self.preempt_requested)
 
