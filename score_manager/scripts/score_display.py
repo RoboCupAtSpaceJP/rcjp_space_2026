@@ -5,7 +5,17 @@ import yaml
 import rospkg
 import rospy
 import tkinter as tk
+import tkinter.font as tkfont
 from std_msgs.msg import Float64
+
+
+def _find_japanese_font():
+    candidates = ["Noto Sans CJK JP", "IPAGothic", "IPAPGothic", "TakaoGothic", "VL Gothic"]
+    available = tkfont.families()
+    for f in candidates:
+        if f in available:
+            return f
+    return "TkDefaultFont"
 
 # (label, yaml_key, max_points)
 SCORE_ITEMS = [
@@ -60,19 +70,20 @@ class ScoreDisplay:
         tk.Frame(self.root, bg=DIMGRAY, height=1).pack(fill='x', padx=20, pady=pady)
 
     def _build_ui(self):
+        JA = _find_japanese_font()
         # ── ヘッダー ──────────────────────────────
         hdr = tk.Frame(self.root, bg=HEADER, pady=12)
         hdr.pack(fill='x')
-        tk.Label(hdr, text="RoboCup@Space 2026", font=("Noto Sans CJK JP",20, "bold"),
+        tk.Label(hdr, text="RoboCup@Space 2026", font=(JA,20, "bold"),
                  bg=HEADER, fg=BLUE).pack()
 
         # ── 残り時間 ──────────────────────────────
         tf = tk.Frame(self.root, bg=BG, pady=10)
         tf.pack(fill='x', padx=20)
-        tk.Label(tf, text="残り時間", font=("Noto Sans CJK JP",13),
+        tk.Label(tf, text="残り時間", font=(JA,13),
                  bg=BG, fg=FG, anchor='w').pack(side='left')
         self.timer_label = tk.Label(tf, text="--:--",
-                                     font=("Noto Sans CJK JP",26, "bold"), bg=BG, fg=GREEN)
+                                     font=(JA,26, "bold"), bg=BG, fg=GREEN)
         self.timer_label.pack(side='right')
 
         self._sep()
@@ -82,11 +93,11 @@ class ScoreDisplay:
         for label, key, max_pt in SCORE_ITEMS:
             row = tk.Frame(self.root, bg=BG, pady=3)
             row.pack(fill='x', padx=24)
-            tk.Label(row, text=label, font=("Noto Sans CJK JP",12),
+            tk.Label(row, text=label, font=(JA,12),
                      bg=BG, fg=FG, width=20, anchor='w').pack(side='left')
-            tk.Label(row, text=f"/ {max_pt}", font=("Noto Sans CJK JP",12),
+            tk.Label(row, text=f"/ {max_pt}", font=(JA,12),
                      bg=BG, fg=DIMGRAY, width=6, anchor='e').pack(side='right')
-            val = tk.Label(row, text="0", font=("Noto Sans CJK JP",12, "bold"),
+            val = tk.Label(row, text="0", font=(JA,12, "bold"),
                            bg=BG, fg=DIMGRAY, width=4, anchor='e')
             val.pack(side='right')
             self.val_labels[key] = val
@@ -98,12 +109,12 @@ class ScoreDisplay:
         total_frame.pack(fill='x', padx=20)
         tk.Label(total_frame,
                  text=f"合 計 点  (Stage {self.current_stage} / Trial {self.current_trial})",
-                 font=("Noto Sans CJK JP",14), bg=BG, fg=FG).pack()
+                 font=(JA,14), bg=BG, fg=FG).pack()
         self.total_label = tk.Label(total_frame, text=f"0",
-                                     font=("Noto Sans CJK JP",64, "bold"), bg=BG, fg=BLUE)
+                                     font=(JA,64, "bold"), bg=BG, fg=BLUE)
         self.total_label.pack()
         self.max_label = tk.Label(total_frame, text=f"/ {MAX_TOTAL}",
-                                   font=("Noto Sans CJK JP",16), bg=BG, fg=DIMGRAY)
+                                   font=(JA,16), bg=BG, fg=DIMGRAY)
         self.max_label.pack()
 
         tk.Frame(self.root, bg=BG, height=12).pack()
