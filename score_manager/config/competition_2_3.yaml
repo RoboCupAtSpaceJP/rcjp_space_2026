@@ -1,7 +1,5 @@
 competition:
-  team_name: "teamA"                            # スコアログ・結果出力に記録されるチーム名
-  trial_number: 1                               # スコアログ・結果出力に記録される試技番号（1から始まる整数）
-  stage: 2                                      # スコアログ・結果出力に記録されるステージ番号
+  # team_name / stage / trial_number は launch 引数で設定するためここには書かない
   fixed_object_name:            "airlock"       # rules.yaml/Gazebo モデルのキー
   fixed_object_display_name:    "airlock"       # 命令文・/report_capture で使う表示名（省略時は fixed_object_name と同じ）
   portable_object_name:         "laptop"        # rules.yaml/Gazebo モデルのキー

@@ -88,7 +88,9 @@ class CompetitionStartState(smach.State):
         self.portable_object_name = rospy.get_param('/competition/portable_object_name')
         self.phrase = rospy.get_param('/rules/instruction_phrase')
 
-        self.instruction_msg = f"{self.phrase}{self.fixed_object_name} and {self.portable_object_name}."
+        fixed_display   = rospy.get_param('/competition/fixed_object_display_name',   self.fixed_object_name)
+        portable_display = rospy.get_param('/competition/portable_object_display_name', self.portable_object_name)
+        self.instruction_msg = f"{self.phrase}{fixed_display} and {portable_display}."
         self.start_requested = False
         self.docking_area_monitor = None
 
@@ -369,10 +371,12 @@ class SearchTaskState(smach.State):
                 userdata.trial_id = write_scores(userdata.scores_dict, userdata.log_file_path, userdata.trial_id)
                 return 'success'
             try:
-                fixed_object_name = rospy.get_param('/competition/fixed_object_name')
+                fixed_object_name   = rospy.get_param('/competition/fixed_object_name')
                 portable_object_name = rospy.get_param('/competition/portable_object_name')
+                fixed_display   = rospy.get_param('/competition/fixed_object_display_name',   fixed_object_name)
+                portable_display = rospy.get_param('/competition/portable_object_display_name', portable_object_name)
                 search_area_monitor = AreaMonitor(area_name="search_area")
-                detector = CaptureDetector(target_names=[fixed_object_name, portable_object_name])
+                detector = CaptureDetector(target_names=[fixed_display, portable_display])
 
                 # TF バッファのウォームアップ完了後、エリア内を一度確認してから離脱チェックを有効化
                 entry_confirmed = False

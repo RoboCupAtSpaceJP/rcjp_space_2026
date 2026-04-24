@@ -3,41 +3,53 @@
     <env name="ROS_MASTER_URI" value="http://172.17.0.1:11311"/>
     <env name="ROS_IP" value="172.17.0.1"/>
 
-    <rosparam command="load" file="$(find score_manager)/config/competition.yaml" />
-    <rosparam command="load" file="$(find score_manager)/config/rules.yaml" />
+    <!-- 試技パラメータ: 実行時に指定 -->
+    <!-- 例: roslaunch score_manager score_manager.launch team:=teamA trial:=1 stage:=1 -->
+    <arg name="team"  default="teamA"/>
+    <arg name="trial" default="1"/>
+    <arg name="stage" default="1"/>
+
+    <!-- ステージ×トライアル別コンフィグを自動選択 -->
+    <!-- ファイル名規則: competition_{trial}_{stage}.yaml -->
+    <rosparam command="load"
+              file="$(find score_manager)/config/competition_$(arg trial)_$(arg stage).yaml"/>
+    <rosparam command="load"
+              file="$(find score_manager)/config/rules.yaml"/>
+
+    <!-- team_name / stage / trial_number を launch 引数で上書き（YAML値より優先） -->
+    <param name="/competition/team_name"    value="$(arg team)"/>
+    <param name="/competition/stage"        value="$(arg stage)"/>
+    <param name="/competition/trial_number" value="$(arg trial)"/>
 
     <node name="spawn_human_pos_2" pkg="score_manager" type="spawn.py" output="screen">
-        <param name="category" value="human_obstacles" />
-        <param name="name"     value="human_pos_2" />
+        <param name="category" value="human_obstacles"/>
+        <param name="name"     value="human_pos_2"/>
     </node>
 
     <node name="spawn_human_pos_1" pkg="score_manager" type="spawn.py" output="screen">
-        <param name="category" value="human_obstacles" />
-        <param name="name"     value="human_pos_1" />
+        <param name="category" value="human_obstacles"/>
+        <param name="name"     value="human_pos_1"/>
     </node>
 
-    <!-- スコア対象の可搬物体 (competition.yaml: portable_object_name) -->
+    <!-- スコア対象の可搬物体 (competition_{trial}_{stage}.yaml: portable_object_name) -->
     <node name="spawn_portable_item" pkg="score_manager" type="spawn.py" output="screen">
-        <param name="category" value="portable_objects" />
-        <param name="name"     value="auto" />
+        <param name="category" value="portable_objects"/>
+        <param name="name"     value="auto"/>
     </node>
 
-    <!-- ダミー可搬物体 (competition.yaml: dummy_objects[0], [1]) -->
+    <!-- ダミー可搬物体 (competition_{trial}_{stage}.yaml: dummy_objects[0], [1]) -->
     <!-- dummy_objects のリスト長より大きいインデックスは自動的にスキップされます -->
     <node name="spawn_dummy_0" pkg="score_manager" type="spawn.py" output="screen">
-        <param name="category" value="portable_objects" />
-        <param name="name"     value="dummy_0" />
+        <param name="category" value="portable_objects"/>
+        <param name="name"     value="dummy_0"/>
     </node>
     <node name="spawn_dummy_1" pkg="score_manager" type="spawn.py" output="screen">
-        <param name="category" value="portable_objects" />
-        <param name="name"     value="dummy_1" />
+        <param name="category" value="portable_objects"/>
+        <param name="name"     value="dummy_1"/>
     </node>
 
-    <node name="area_marker_publisher" pkg="score_manager" type="area_marker.py" output="screen"/>
-    
-    <node name="search_point_tf_publisher" pkg="score_manager" type="search_point.py" output="screen"/>
-    
-    <node name="score_manager_node" pkg="score_manager" type="atspace_score_manager.py" output="screen"/>
-
-    <node name="score_display" pkg="score_manager" type="score_display.py" output="screen"/>
+    <node name="area_marker_publisher"     pkg="score_manager" type="area_marker.py"          output="screen"/>
+    <node name="search_point_tf_publisher" pkg="score_manager" type="search_point.py"          output="screen"/>
+    <node name="score_manager_node"        pkg="score_manager" type="atspace_score_manager.py" output="screen"/>
+    <node name="score_display"             pkg="score_manager" type="score_display.py"          output="screen"/>
 </launch>

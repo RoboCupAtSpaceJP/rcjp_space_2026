@@ -23,8 +23,9 @@ class CaptureDetector:
         self.iss_frame = "iss_body"
 
         # 表示名 → TFフレーム名 のマッピング（可搬対象物のみ; 固定物体はそのまま）
-        portable_display = rospy.get_param('/competition/portable_object_name', '')
-        portable_tf = rospy.get_param('/competition/portable_object_tf', portable_display)
+        portable_name    = rospy.get_param('/competition/portable_object_name', '')
+        portable_tf      = rospy.get_param('/competition/portable_object_tf', portable_name)
+        portable_display = rospy.get_param('/competition/portable_object_display_name', portable_name)
         self.name_to_tf = {portable_display: portable_tf} if portable_display else {}
 
         self.result = None
