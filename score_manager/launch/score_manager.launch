@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="container_ros_master_uri" default="http://172.17.0.1:11311"/>
-    <arg name="my_node_ip" default="172.17.0.1"/>
+    <env name="ROS_MASTER_URI" value="http://172.17.0.1:11311"/>
+    <env name="ROS_IP" value="172.17.0.1"/>
 
     <rosparam command="load" file="$(find score_manager)/config/competition.yaml" />
     <rosparam command="load" file="$(find score_manager)/config/rules.yaml" />
