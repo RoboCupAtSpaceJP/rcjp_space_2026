@@ -1,0 +1,7 @@
+# Ubuntu環境での実行を想定し、全テキストファイルをLF固定
+* text=auto eol=lf
+
+# 画像・真のバイナリファイルは変換しない
+*.png binary
+*.jpg binary
+*.jpeg binary
