@@ -5,7 +5,7 @@
     <link name='link'>
       <gravity>0</gravity>
 
-      <visual name='visual'>
+      <visual name='body_visual'>
         <geometry>
           <mesh>
             <uri>model://astrobee_freeflyer/meshes/body.dae</uri>
@@ -14,12 +14,97 @@
         </geometry>
       </visual>
 
-      <collision name='collision'>
+      <visual name='pmc_port_visual'>
         <geometry>
           <mesh>
-            <uri>model://astrobee_freeflyer/meshes/body.dae</uri>
+            <uri>model://astrobee_freeflyer/meshes/pmc.dae</uri>
             <scale>1 1 1</scale>
           </mesh>
+        </geometry>
+      </visual>
+
+      <visual name='pmc_port_bumper_visual'>
+        <geometry>
+          <mesh>
+            <uri>model://astrobee_freeflyer/meshes/pmc_bumper.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <visual name='pmc_port_skin_visual'>
+        <geometry>
+          <mesh>
+            <uri>model://astrobee_freeflyer/meshes/pmc_skin_.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <visual name='pmc_stbd_visual'>
+        <pose>0 0 0 0 3.14 3.14</pose>
+        <geometry>
+          <mesh>
+            <uri>model://astrobee_freeflyer/meshes/pmc.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <visual name='pmc_stbd_bumper_visual'>
+        <pose>0 0 0 0 3.14 3.14</pose>
+        <geometry>
+          <mesh>
+            <uri>model://astrobee_freeflyer/meshes/pmc_bumper.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <visual name='pmc_stbd_skin_visual'>
+        <pose>0 0 0 0 3.14 3.14</pose>
+        <geometry>
+          <mesh>
+            <uri>model://astrobee_freeflyer/meshes/pmc_skin_.dae</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <collision name='body_collision'>
+        <pose>-0.000794 0.000229 -0.003907 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.290513 0.151942 0.281129</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <collide_bitmask>0xffff</collide_bitmask>
+          </contact>
+        </surface>
+      </collision>
+
+      <collision name='pmc_port_collision'>
+        <pose>0 -0.117546 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.319199 0.083962 0.319588</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <collide_bitmask>0xffff</collide_bitmask>
+          </contact>
+        </surface>
+      </collision>
+
+      <collision name='pmc_stbd_collision'>
+        <pose>0 0.117546 0 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.319199 0.083962 0.319588</size>
+          </box>
         </geometry>
         <surface>
           <contact>
@@ -32,7 +117,9 @@
         <update_rate>10.0</update_rate>
         <always_on>true</always_on>
         <contact>
-          <collision>collision</collision>
+          <collision>body_collision</collision>
+          <collision>pmc_port_collision</collision>
+          <collision>pmc_stbd_collision</collision>
         </contact>
         <plugin name='ros_gazebo_contact_plugin' filename='libgazebo_ros_bumper.so'>
           <alwaysOn>true</alwaysOn>
