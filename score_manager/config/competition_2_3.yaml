@@ -9,6 +9,6 @@ competition:
   human_pos_2_tf:       "obj_3"                 # human_pos_2 のTFフレーム名
   dummy_objects: ["tape", "astrobee_freeflyer"] # スポーンされるがスコア対象外のダミー物体（最大2個まで）
   human_assignments:                            # 人間障害物の配置設定（最大2人）
-    human_pos_1: "person_g"                     # 1人目の見た目。出現させたくない場所は "" or "null"
-    human_pos_2: "person_c"                     # 2人目の見た目。出現させたくない場所は "" or "null"
+    human_pos_1: "person_c"                     # 1人目の見た目。出現させたくない場所は "" or "null"
+    human_pos_2: "person_f"                     # 2人目の見た目。出現させたくない場所は "" or "null"
   time_limit: 900                               # タスクの制限時間（900秒 = 15分）
