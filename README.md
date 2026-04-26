@@ -52,18 +52,8 @@ roslaunch score_manager score_manager.launch team:=ib2_team:01 trial:=1 stage:=1
 ```
 
 ## 6. 競技の開始
-```
-xhost +local:docker
-docker exec -it ib2_simulator_rcjp2026 bash
-
-source /opt/ros/noetic/setup.bash
-source /home/nvidia/IB2/Int-Ball2_platform_simulator/devel/setup.bash
-
-cd /home/jaxa/int-ball2_simulator/rcjp_space_2026/shared_data_sim/ 
-rosbag record -a
-```
-
-その後，競技の実施．
+Gazeboシミュレータの動作を開始し，GSEのNavigationを「ON」にする．
+その後，ユーザのコンテナを起動し，ユーザロジックの番号を送ることで競技をスタートする．
 
 ## 5. コンテナ等の終了処理
 ```
