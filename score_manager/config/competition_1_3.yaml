@@ -1,10 +1,10 @@
 competition:
   # team_name / stage / trial_number は launch 引数で設定するためここには書かない
   fixed_object_name:    "window"        # rules.yaml/Gazebo モデルのキー
-  fixed_object_display_name: "Window"   # 命令文・/report_capture で使う表示名（省略時は fixed_object_name と同じ）
+  fixed_object_display_name: "window"   # 命令文・/report_capture で使う表示名（省略時は fixed_object_name と同じ）
   portable_object_name: "tape"          # rules.yaml/Gazebo モデルのキー
-  portable_object_display_name: "Tape"  # 命令文・/report_capture で使う表示名（省略時は portable_object_name と同じ）
-  portable_object_tf:   "obj_1"         # TFフレーム名（物体種別を明かさない不透明な名前）
+  portable_object_display_name: "tape"  # 命令文・/report_capture で使う表示名（省略時は portable_object_name と同じ）
+  portable_object_tf:   "tape"          # TFフレーム名（物体種別を明かさない不透明な名前）
   human_pos_1_tf:       "obj_2"         # human_pos_1 のTFフレーム名
   human_pos_2_tf:       "obj_3"         # human_pos_2 のTFフレーム名
   dummy_objects: ["coke", "laptop"]     # スポーンされるがスコア対象外のダミー物体（最大2個）
